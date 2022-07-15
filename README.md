@@ -10,3 +10,5 @@ cd to the project directory, and run `npm install` just to make sure all depende
 This is currently still in beta. There could be some bugs, and some potential vulnerabilities, but I am constantly reviewing every endpoint for vulnerabilities like XSS and HPP, and every input is sanitized.
 
 If you find a bug, report it to @shrekman#5545 privately or report it the the #bug-report channel in https://discord.gg/4VDmfuBSFf
+
+It's lacking many features rn, like file upload and account creation*
