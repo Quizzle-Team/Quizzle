@@ -23,6 +23,12 @@ router.get('/close.svg', async function(req,res){
 router.get('/x.svg', async function(req,res){
     res.sendFile(path.join(`${__dirname}/../style/`,`x.svg`))
 })
+router.get('/user.svg', async function(req,res){
+    res.sendFile(path.join(`${__dirname}/../style/`,`user.svg`))
+})
+router.get('/door.svg', async function(req,res){
+    res.sendFile(path.join(`${__dirname}/../style/`,`logout_door.svg`))
+})
 
 //favicon
 router.get('/favicon.ico', function(req,res){

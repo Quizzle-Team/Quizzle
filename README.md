@@ -12,3 +12,5 @@ This is currently still in beta. There could be some bugs, and some potential vu
 If you find a bug, report it to @shrekman#5545 privately or report it the the #bug-report channel in https://discord.gg/4VDmfuBSFf
 
 It's lacking many features rn, like file upload and account creation*
+
+**I forgot to mention, no, adoman is *NOT* a backdoor account, its a test teacher account, its adoman:adoman**

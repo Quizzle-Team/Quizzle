@@ -9,23 +9,32 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="banner">
-        <h1>Quizzle</h1>
+    <div class="banner", style="display:flex">
+        <h1 style="width: -webkit-fill-available;">Quizzle</h1>
+        <img onclick="document.location.href='/signIn'" height="64px" src="/user.svg" alt="user" class="user">
     </div>
     <br>
     <br>
     <br>
     <center>
         <h1>SEARCH FOR YOUR IDEAL QUIZ!</h1>
-        <form action="/search" method="get">
-            <input type="search" name="search" id="searchbar">
-        </form>
-        <h3>Just search for a keyword you want to learn!!!</h3>
+        <div class="hold">
+
+            <form action="/search" method="get">
+                <input type="search" name="search" id="searchbar">
+            </form>
+            <h3>Just search for a keyword you want to learn!!!</h3>
+        </div>
+        <br /><br /> <!--epic mobile compatibility (VERY REAL)-->
         <section>
             <sep></sep>
             <h2>About Quizzle</h5>
-            <p>Quizzle is an <a href="https://github.com/SemiConductorShortage/">open source</a> quiz system</p>
+            <p>Quizzle is an <a href="https://github.com/Quizzle-Team/Quizzle">open source</a> quiz system</p>
+            <p><b>Originally designed for The Winchester School for local usage.</b></p>
         </section>
+
+        <!--Made by Bedros Pamboukian https://github.com/SemiConductorShortage https://pastrikk.com/-->
+        
     </center>
 </body>
 </html>
