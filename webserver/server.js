@@ -45,6 +45,17 @@ app.get('/admin/', function(req,res){
     res.redirect('/signIn/')
 })
 
+app.get('/makeQuiz', function(req,res){
+	auth = clean(req.cookies.auth)
+
+        uname = base64dec(auth.split(':')[0])
+        password = base64dec(auth.split(':')[1])
+
+        if (authenticate(uname, hash(password))){
+		return res.render('quizmaker.ejs');
+	}
+})
+
 app.get('/teacher/', function(req,res){
     if (req.cookies.auth){
         auth = clean(req.cookies.auth)
