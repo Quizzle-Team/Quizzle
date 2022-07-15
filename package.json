@@ -1,0 +1,20 @@
+{
+  "name": "quiz",
+  "version": "1.0.0",
+  "description": "web",
+  "main": "webserver/server.js",
+  "scripts": {
+    "server": "node webserver/server.js"
+  },
+  "author": "Quizzle-Team / Bedros Pamboukian",
+  "license": "ISC",
+  "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "ejs": "^3.1.7",
+    "express": "^4.18.0",
+    "js-search": "^2.0.0",
+    "jsonwebtoken": "^8.5.1",
+    "websocket": "^1.0.34",
+    "ws": "^8.5.0"
+  }
+}

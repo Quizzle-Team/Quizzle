@@ -1,0 +1,30 @@
+{
+	"questions": {
+		"1": {
+			"FTP Stands for...": [
+				"File transfer protocol",
+				"Free transfer program",
+				"File transfer program"
+			],
+			"CorrectAnswer": "File transfer protocol"
+		},
+		"2": {
+			"HTTP stands for...": [
+				"HyperText Transfer Protocol",
+				"HTML Transfer Time Protocol",
+				"HyperText Table Protocol",
+				"HyperTransfer Text Protocol"
+			],
+			"CorrectAnswer": "HyperText Transfer Protocol"
+		},
+		"3": {
+			"HTML stands for...": [
+				"HyperText Markup Language",
+				"HyperText Machine Language",
+				"HyperText Matrix LAN",
+				"HyperText Markzuckerberg LAN"
+			],
+			"CorrectAnswer": "HyperText Markup Language"
+		}
+	}
+}

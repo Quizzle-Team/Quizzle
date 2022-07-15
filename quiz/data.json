@@ -1,0 +1,28 @@
+[
+	{
+		"name": "Cyber Security",
+		"description": "How to stay safe online",
+		"url": "/quiz/cyberSecurity",
+		"keywords": [
+			"cybersecurity",
+			"security",
+			"safe",
+			"virus",
+			"malware"
+		]
+	},
+    {
+		"name": "Internet Protocols",
+		"url": "/quiz/Internet Protocols",
+		"description": "test about the different protocols (ftp,ssh,http, etc.)",
+		"keywords": [
+			"https",
+			"ftp",
+			"http",
+			"ssh",
+			"protocols",
+			"internet",
+			"ip"
+		]
+	}
+]

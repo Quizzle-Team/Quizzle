@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Quizzle - Results for <%=query%></title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        a{
+            display: inline-flex;
+            flex-direction: row;
+            align-items: center;
+        }
+        h4 {
+            display: flex;
+            justify-content: center;
+            align-content: center;
+        }
+        
+        img{
+            position: relative;
+            left: 10px;
+            height: 25px;
+        }
+        .spinner { 
+            height: 100px;
+            background-color: white;
+            width: 100px;
+            position: fixed;
+            top:calc(50% - 50px);
+            left:calc(50% - 50px);
+            border-radius: 7px;
+        }
+
+        .loadSpinner {
+            height: 75%;
+            width: 75%;
+            position: relative;
+            top: 12.5%;
+            left: 12.5%;
+            border-radius: 100%;
+            animation: loadSpinner 2s linear infinite;    
+        }
+        
+        @keyframes loadSpinner {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="banner">
+        <h1>Results for <i><%=query%></i></h1>
+    </div>
+    <br>
+    <br>
+    <br>
+    <center>
+        <%-results%>
+
+        <b><a href="/">Back to Home</a></b>
+    </center>
+
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Quizzle - Make a quiz</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="/style.css">
+    <script src="/quizmaker.js" async defer></script>
+    <style>
+        input {
+            text-transform: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="banner">
+        <h1>Quizzle - Make a quiz</h1>
+    </div>
+    <br>
+    <br>
+    <br>
+    <center>
+        <h1>MAKE YOUR IDEAL QUIZ!</h1>
+        <form action="/makeQuiz" method="post">
+            <h2>Quiz Name</h2>
+            <input type="text" name="quizname" id="quizname">
+            <h2>Description</h2>
+            <input type="text" name="description">
+            <h2>Keywords (Delimited by a comma)</h2>
+            <input type="text" name="keywords">
+
+
+
+            <div class="sep"></div>
+            <h2>Question 1</h2>
+            <label>Optional Image Attachment</label>
+            
+            <div class="custom-file">
+                <input type="file" class="customFile" id="file1" name="file:1">
+                <button type="button">Upload File!</button>
+                <label">Choose file</label>
+            </div>
+
+            <input type="text" name="question:1"> <br>
+            <h4>Correct answer</h4>
+            <input type="text" name="choice:1:1:correct"> <br>
+
+            <h4>Other answers</h4>
+            <input type="text" name="choice:1:2"> <br>
+            <button type="button" onclick="createMoreChoices(1)">Add another choice</button>
+            <div class="sep"></div>
+
+
+            <button type="button" onclick="anotherQ()">Make another question</button>
+            <div class="sep"></div>
+            <button type="submit">Submit!</button>
+        </form>
+    </center>
+</body>
+
+</html>
