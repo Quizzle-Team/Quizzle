@@ -15,7 +15,7 @@ app.set('render engine','ejs')
 
 fileHandlers = []
 
-var port = 5001;
+var port = 8080;
 var host = '0.0.0.0'
 
 var WServer = new ws.Server({
