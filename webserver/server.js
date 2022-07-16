@@ -15,7 +15,8 @@ app.set('render engine','ejs')
 
 fileHandlers = []
 
-var port = 8080;
+var port = 5001;
+var host = '0.0.0.0'
 
 var WServer = new ws.Server({
     port:"8000",
@@ -520,6 +521,6 @@ app.post('/makeQuiz', function(req,res){
 
 
 
-app.listen(port, function(data){
+app.listen(port, host,function(data){
     console.log(`App is running on port ${port}\nGo to the page with http://localhost:${port}/\nAdmin page http://localhost:${port}/admin/signin\n\n --LOGGING--\n`)
 })
