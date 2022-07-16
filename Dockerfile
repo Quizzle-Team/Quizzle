@@ -16,6 +16,5 @@ RUN npm install
 COPY . .
 
 EXPOSE 8080
-EXPOSE 5001
 EXPOSE 8000
 CMD ["node", "webserver/server.js"]
