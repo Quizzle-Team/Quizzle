@@ -34,17 +34,13 @@ module.exports = {
         return true
     },
     clean : function(str){ //prevents hpp, since js isnt type strict and allows me to try string stuff on arrays causing the whole thing to crash
-        typeof str=='object' ? str = str[0] : null; 
+        if (str.constructor == Object)str = JSON.stringify(str)
+        typeof str=='object' ? str = str.toString() : null; 
+
         return str;
     },
-    findQuiz : function(url){
-        let json = fs.readFileSync("").toString()
-
-        findUrl = '/quiz/ceeber'
-
-        e = c.filter(function(data){
-            return (data['url']==findUrl)
-        })[0]
+    createUnique : function(){
+        return crypto.randomUUID().toString().toUpperCase();
     }
 
 

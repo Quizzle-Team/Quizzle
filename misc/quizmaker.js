@@ -1,3 +1,14 @@
+function fSubmit(){
+
+    input = document.createElement('input')
+    input.setAttribute('type',"text")
+    input.setAttribute('name',"quizname")
+    input.id="quizname"
+    input.value = document.querySelector('[contenteditable]').innerText
+    document.body.querySelector('form').insertBefore(input, document.querySelector('h2:not([contenteditable])')) 
+    document.body.querySelector('form').submit()
+}
+
 
 function createMoreChoices(qid){
     questionChoices = document.querySelectorAll("[name^='choice:"+qid+"']")
