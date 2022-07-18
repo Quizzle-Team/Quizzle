@@ -1,5 +1,6 @@
 //IMPORTS
 const imports = require("./imports.js")
+
 keys = (Object.keys(imports))
 keys.forEach(key => {global [key] = imports[key]}) //im a genius!!!
 
@@ -7,7 +8,7 @@ const express = require('express')
 const authenticate = require("../modules/authentication.js")
 const { fs, path } = require("./imports.js")
 const { base64dec, hash, clean } = require("../modules/misc.js")
-const res = require("express/lib/response")
+const { CLOSE_REASON_PROTOCOL_ERROR } = require("websocket/lib/WebSocketConnection")
 const app = express();
 
 app.use(imports.middleWare) //i know i added it as a global variable but this is a cleaner way of showing it
@@ -17,6 +18,10 @@ fileHandlers = []
 
 var port = 8080;
 var host = '0.0.0.0'
+
+
+databasePort = 5432;
+
 
 var WServer = new ws.Server({
     port:"8000",
@@ -265,7 +270,8 @@ app.get('/quiz/:quiz', async function(req,res){
             
             if (err) return res.render('error.ejs', {error:"Nonexistent quiz", description:err});
             qHTML = ""
-            questions = JSON.parse(data.toString()).questions;
+            mainJSON = JSON.parse(data.toString())
+            questions = mainJSON.questions;
             qList = Object.keys(questions);
             qHeader = `<div class='sep'></div><div class='sep'></div><h1 qid="<%-questionid%>" style="color:<%=color%>;text-transform:uppercase;letter-spacing:4px;"><%=text%></h1>\n<div class='sep'></div><div class="buttonFlex"><%-buttons%></div>`
             button = '<button style="background:<%=color%>" questionid="<%-questionid%>" onclick="process(this)"><%=text%></button>'
@@ -290,7 +296,7 @@ app.get('/quiz/:quiz', async function(req,res){
             };
 
             console.log(questions)
-            res.render('quiz.ejs', {questionHTML:qHTML, title:quiz})
+            res.render('quiz.ejs', {questionHTML:qHTML, title:mainJSON.name})
         });
     }
     
@@ -320,6 +326,7 @@ WServer.on("connection", async function(wsclient){
                     
                     let correctAnswers = 0;
                     console.log(answers)
+
                     Object.keys(questionJSON).forEach(currentQ => {
                         correctAnswer = questionJSON[currentQ.toString()]["CorrectAnswer"];
                         if (answers[(parseInt(currentQ)-1).toString()] == correctAnswer){
@@ -371,7 +378,14 @@ WServer.on("connection", async function(wsclient){
                 }
                 
                 else {
+
                     currentQ = data.toString().split('|')[0]
+
+                    if (isNaN(currentQ)){
+                        wsclient.send("Invalid data, hijack detected. Closing...") //if the client sends something invalid then its probably a hijack aka manual connection
+                        return wsclient.close()
+                    }
+
                     answersent = data.toString().split('|')[1]
                     
                     answers[currentQ] = answersent;
@@ -392,19 +406,6 @@ WServer.on("connection", async function(wsclient){
 
 
 
-app.get('/isQuiz', function(req,res){
-    matchList = ["/", "\\.\\.", "%2F", "%2E%2E", "%5C"]
-    matchList.forEach(match=>{
-        if (req.params.quiz.match(match) != null){
-            res.status(400)
-            return res.send('error.ejs', {error:"why", description:"Invalid characters"})
-        }
-    })
-    
-    if (fs.existsSync(path.join(`${__dirname}/../`,`quiz/${quiz}.json`))) {
-        return res.render('error.ejs', {error:"Quiz Exists", description:"That quiz already exists!"})
-    }
-})
 
 app.post('/makeQuiz', function(req,res){
     auth = clean(req.cookies.auth).split(':')
@@ -420,10 +421,102 @@ app.post('/makeQuiz', function(req,res){
     
 
     console.log(req.body)
-    quiz = clean(req.body.quizname);
-    if (quiz.match("/") != null || quiz.match("\\.\\.")  != null || quiz.match("%2F")  != null || quiz.match("%2E%2E") !=null ){
-        return res.render('error.ejs', {error:"why", description:"Invalid characters"})
+
+    if (typeof req.body == "string"){
+        try {
+            req.body = JSON.parse(req.body)
+        }
+        catch(e){
+            return res.render('error.ejs', {error:"Invalid JSON", description:"The JSON you sent was invalid!"})
+        }
     }
+
+    if (Object.keys(req.body).length == 1){
+        try {
+            req.body = JSON.parse(Object.keys(req.body)[0])
+        }
+        catch {
+            return res.render('error.ejs', {error:"Invalid JSON", description:"If god could explain to me just what the hell you were supplying as json I would be forever grateful"})
+
+        }
+    }
+
+    if (Object.keys(req.body).length <= 4){       
+        return res.render('error.ejs', {error:"Invalid JSON", description:"Something is missing here."})
+    }
+
+    
+
+    //Format checking here
+    checking = {}
+    answerChecks = {}
+    try{
+
+    Object.keys(req.body).forEach(key => {
+        console.log(key)
+        if (typeof key != "string")throw new Error("Invalid JSON : Key not a string");
+        if (req.body[key].trim() == "")throw new Error("Invalid JSON : Empty Key");
+        
+        protPollution = function(key){
+            if (key.trim() == "prototype" || key.trim() == "__proto__" || key.trim() == "constructor"){
+                return true
+            }
+        }
+        if (protPollution(key))throw new Error("Stop trying to hack me wahhhh")
+        if (protPollution(req.body[key]))throw new Error("Stop trying to hack me wahhhh")
+        
+        
+
+        if (key.startsWith("question:")){
+            console.log("Found a question", key)
+            if (key.split(':').length != 2)throw new Error("Invalid JSON : Question key is not in the format question:<number>")
+            
+            if (isNaN(key.split(':')[1].replace(' ','')))throw new Error("Invalid JSON : Question id is not a number")
+            
+            checking[key.split(':')[1]] = []
+            console.log("CHECKING  :")
+            console.log(checking)
+        }
+        else if (key.startsWith("choice:")){
+            fmat = "The JSON you sent was invalid! choice:<questionID>:<choiceId> / choice:<questionID>:<choiceId>:correct should be followed!"
+            choiceParsed = key.split(':')
+            if (choiceParsed.length < 3)throw new Error(fmat)
+            
+            if (choiceParsed.length >= 4 && choiceParsed[3] != "correct")throw new Error(fmat) //yes, multiple `if` statements, dont care!!
+            if (isNaN(choiceParsed[2]))throw new Error(fmat)
+            if (checking[choiceParsed[1]] == undefined)throw new Error("The JSON you sent was invalid! That question doesnt exist!")
+            
+            console.log("Am i correct? ", choiceParsed[3] == "correct", `ALSO ${choiceParsed}`)
+            if (choiceParsed[3] == "correct")answerChecks[choiceParsed[1]] = true
+            
+            checking[choiceParsed[1]].push(choiceParsed[2])
+        }
+    })
+    console.log(checking)
+    Object.keys(checking).forEach(key => {
+        console.log("ANSWER CHECK! DOES ",key," HAVE AN ANSWER?? ", answerChecks[key] == undefined) // too lazy to formatstrings
+        if (checking[key].length < 2)throw new Error("You need at least 2 choices for each question!")
+        if (answerChecks[key] == undefined)throw new Error("You need to specify if a question is correct!")
+    })
+
+    }
+    catch (e){
+        console.log(e.stack)
+        return res.render('error.ejs', {error:"Invalid JSON", description:e})
+    }
+
+    
+    //Format checking done
+    
+
+    quiz = clean(req.body.quizname);
+    if(quiz.trim() == ""){
+        return res.status(400).render('error.ejs', {error:"Quiz Name Error", description:"Quiz name cannot be empty!"})
+    }
+
+    /*if (quiz.match("/") != null || quiz.match("\\.\\.")  != null || quiz.match("%2F")  != null || quiz.match("%2E%2E") !=null ){
+        return res.render('error.ejs', {error:"why", description:"Invalid characters"})
+    }*/ //i forgot to remove this after i made a change that makes the quiz names pseudorandom [whoops]
 
     else {
         
@@ -440,7 +533,6 @@ app.post('/makeQuiz', function(req,res){
         //quiz is available
         keys = Object.keys(req.body).slice(3)
         //begin parsing the content
-        console.log(keys)
         base = {
             "questions" : {
 
@@ -448,7 +540,6 @@ app.post('/makeQuiz', function(req,res){
         }
         keys.forEach(element => {
             element = clean(element)
-            console.log(element)
             portions = element.split(':')
             elemType = portions[0]
             qNum = portions[1]
@@ -477,12 +568,12 @@ app.post('/makeQuiz', function(req,res){
                 }
             }
         })
-        console.log(base)
 
-        UID = createUnique()
+        UID = misc.createUnique()
         attempt = 0
-        while (fs.existsSync(`${__dirname}/../quiz/`,`${UID}.json`)){
-            UID = createUnique()
+        console.log(`${__dirname}/../quiz/${UID}.json exists? ${fs.existsSync(`${__dirname}/../quiz/${UID}.json`)}`)
+        while (fs.existsSync(`${__dirname}/../quiz/${UID}.json`)){
+            UID = misc.createUnique()
             attempt++
             if (attempt > 100){
                 return res.render('error.ejs', {error:"Server Error", description:"Could not create unique ID. Try again later?"})
@@ -490,14 +581,15 @@ app.post('/makeQuiz', function(req,res){
 
         }
 
+        base['name'] = quiz
         quizPath = path.join(`${__dirname}/../quiz/`,`${UID}.json`)
 
         fs.appendFile(quizPath,JSON.stringify(base,null,'\t'), function(){
-            res.redirect(`/quiz/${quiz}`)
+            res.redirect(`/quiz/${UID}`)
         })
 
 
-        keywords = clean(req.body.keywords).split(',')
+        keywords = clean(req.body.keywords).split(','); //the spacing isnt really needed but it makes it easier to read
         description = req.body.description
         fs.readFile(path.join(`${__dirname}/../quiz/`,`data.json`), function(err,data){
             data = JSON.parse(data.toString())
@@ -517,8 +609,6 @@ app.post('/makeQuiz', function(req,res){
         })
     }
 })
-
-
 
 
 app.listen(port, host,function(data){

@@ -52,17 +52,23 @@ function anotherQ(){
 
     qToMake = parseInt(lastQ)+1
     div = document.createElement('div')
-    
+    /*
+        <label>Optional Image Attachment</label>
+
+<div class="custom-file">
+    <input type="file" class="custom-file-input" id="customFile" name="image:${qToMake}">
+    <label class="custom-file-label" for="customFile">Choose file</label>
+    <button type="button">Upload File!</button>
+</div> 
+<input type="file" name="image:${qToMake}" />
+    not supported but im adding support for it soon so im just saving it here
+
+    */
     div.innerHTML = `
         <div class="sep"></div>
         <h2>Question ${qToMake}</h2>
-        <label>Optional Image Attachment</label>
-        <div class="custom-file">
-            <input type="file" class="custom-file-input" id="customFile" name="image:${qToMake}">
-            <label class="custom-file-label" for="customFile">Choose file</label>
-            <button type="button">Upload File!</button>
-        </div>
-        <input type="file" name="image:${qToMake}" />
+        
+        
         <input type="text" name="question:${qToMake}"> <br>
         <h4>Correct answer</h4>
         <input type="text" name="choice:${qToMake}:1:correct"> <br>

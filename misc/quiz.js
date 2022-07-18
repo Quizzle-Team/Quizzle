@@ -49,7 +49,7 @@ function glow(qid, color=undefined){
    
 
 
-quiz = document.getElementsByTagName('h1')[0].innerText
+quiz = document.location.href.split('/').slice(-1)[0];
 window.addEventListener("beforeunload", callback, {capture: true});
   
 
