@@ -26,8 +26,9 @@
     <center>
         <h1>MAKE YOUR IDEAL QUIZ!</h1>
         <form action="/makeQuiz" method="post">
-            <h2 contenteditable="true">Quiz Name</h2>
-            <input type="text" name="quizname" id="quizname">
+            <h2 style="width:fit-content;min-width: 135px;padding-inline: 10px;" contenteditable="true">Quiz Name [Click To Edit]</h2>
+            
+            
             <h2>Description</h2>
             <input type="text" name="description">
             <h2>Keywords (Delimited by a comma)</h2>
@@ -37,13 +38,7 @@
 
             <div class="sep"></div>
             <h2>Question 1</h2>
-            <label>Optional Image Attachment</label>
             
-            <div class="custom-file">
-                <!--<input type="file" class="customFile" id="file1" name="file:1">-->
-                <button type="button">Upload File!</button>
-                <label">Choose file</label>
-            </div>
 
             <input type="text" name="question:1"> <br>
             <h4>Correct answer</h4>
@@ -57,7 +52,7 @@
 
             <button type="button" onclick="anotherQ()">Make another question</button>
             <div class="sep"></div>
-            <button type="submit">Submit!</button>
+            <button type="button" onclick="fSubmit()">Submit!</button>
         </form>
     </center>
 </body>

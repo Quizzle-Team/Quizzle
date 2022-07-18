@@ -251,3 +251,6 @@ section a{
   }
 }
 
+[contenteditable="true"] {
+  outline: 2px dashed white;
+}
