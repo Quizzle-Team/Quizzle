@@ -14,6 +14,8 @@ services:
       - PGHOST=database
     depends_on:
       - database
+    volumes:
+    - env:/usr/src/app
 
   database:
     container_name: database
@@ -29,4 +31,5 @@ services:
     - dbvol:/var/lib/postgresql/data
 volumes:
   dbvol: {}
+  env: {}
   
