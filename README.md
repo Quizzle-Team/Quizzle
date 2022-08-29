@@ -13,4 +13,9 @@ If you find a bug, report it to @shrekman#5545 privately or report it the the #b
 
 It's lacking many features rn, like file upload and account creation*
 
+Build Command: `docker compose build`
+Run Containers : `docker compose up`
+
+If you make a change and it isnt registering, try running `docker compose build --no-cache`. This WILL take longer to build(!)
+
 **I forgot to mention, no, adoman is *NOT* a backdoor account, its a test teacher account, its adoman:adoman**

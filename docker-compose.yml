@@ -1,0 +1,32 @@
+services:
+  quizzle:
+    container_name: quizzle
+    image: quizzle:1.1.0
+    build:
+      context: .
+    ports: 
+      - 8080:8080
+      - 8000:8000
+    environment:
+      - PGUSER=quizzleAdmin
+      - PGDATABASE=quizzleDB
+      - PGPASSWORD=12345
+      - PGHOST=database
+    depends_on:
+      - database
+
+  database:
+    container_name: database
+    image: 'postgres:14'
+    ports: 
+      - '5432:5432'
+    environment:
+    - POSTGRES_USER=quizzleAdmin
+    - POSTGRES_PASSWORD=12345
+    - POSTGRES_DB=quizzleDB
+    volumes:
+    - ./initscripts/setup.sql:/docker-entrypoint-initdb.d/setup.sql
+    - dbvol:/var/lib/postgresql/data
+volumes:
+  dbvol: {}
+  

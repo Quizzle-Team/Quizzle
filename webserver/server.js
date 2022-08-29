@@ -7,13 +7,15 @@ keys.forEach(key => {global [key] = imports[key]}) //im a genius!!!
 const express = require('express')
 const authenticate = require("../modules/authentication.js")
 const { fs, path } = require("./imports.js")
-const { base64dec, hash, clean } = require("../modules/misc.js")
+const { base64dec, hash, clean, base64enc } = require("../modules/misc.js")
 const { CLOSE_REASON_PROTOCOL_ERROR } = require("websocket/lib/WebSocketConnection")
 const app = express();
 
 app.use(imports.middleWare) //i know i added it as a global variable but this is a cleaner way of showing it
 app.set('render engine','ejs')
-
+const pg = require('pg') //I wouldve kept it in the imports but this is a very important import and it helps to have better autocomplete for it
+const { query } = require("express")
+const { client } = require("websocket")
 fileHandlers = []
 
 var port = 8080;
@@ -21,8 +23,18 @@ var host = '0.0.0.0'
 
 
 databasePort = 5432;
+const settings = {
+    host:process.env.PGHOST,
+    user:process.env.PGUSER,
+    password:process.env.PGPASSWORD,
+    database:process.env.PGDATABASE,
+    port:databasePort
+}
 
 
+
+
+console.log(settings)
 var WServer = new ws.Server({
     port:"8000",
     path : "/quizSocket",
@@ -200,7 +212,7 @@ app.post('/removeQuiz', function(req,res){
 
 
 
-app.get('/search', async function(req,res){
+app.get('/search', function(req,res){
     if (req.query.search == undefined){
         console.log('No data')
         data = {
@@ -214,10 +226,29 @@ app.get('/search', async function(req,res){
 
     else { //valid data
 
-        let search = req.query.search; 
+        let search = req.query.search;
+        let originalSearch = search;
         typeof search=='object' ? search = search[0] : null; //HPP prevention, otherwise it'll crash when /search?search=hi&search=bye
+        search = search.replace("\\","\\\\").replace("%","\\%") //To prevent wildcards being placed, query would just be % and everything would match, so here's the fix
+        console.log(search)
 
+        const client = new pg.Client(settings);
+        client.connect()
+        console.log("escaped", client.escapeIdentifier(search), client.escapeLiteral(search))
+        client.query("SELECT * FROM search WHERE quizname LIKE $1",[`%${search}%`], (err,result)=>{ // %search% to allow finding words that contain the query
+            if (err){
+                return res.render("./error.ejs", {error:"500 - Server Error", description:err})
+            }
+            else {
+                return res.render("./results.ejs", {query:originalSearch, results:base64enc(JSON.stringify(result.rows))}) // b64 because im inserting it raw, not filtered or escaped, it can trigger xss by making a quiz called e"};alert(1); 
+                //im keeping it raw because the data has to be exactly how it was given to the server, filtering will be done on the actual html elements
+                
+            }
+        })
+        console.log("!")
 
+        
+        /*
         let query = new jsearch.Search('keywords')
         query.addIndex('keywords')
         query.addIndex('name')
@@ -235,7 +266,7 @@ app.get('/search', async function(req,res){
 
             
             resList.forEach(element => {
-                let desc = results[element].description
+                let desc = results[element].quizname
                 let squery = results[element].name
                 let url = results[element].url
 
@@ -247,6 +278,7 @@ app.get('/search', async function(req,res){
             }
             res.render('results.ejs', {query:search, results:htmlCollection})
         });
+        */
     }
 })
 
@@ -436,8 +468,7 @@ app.post('/makeQuiz', function(req,res){
             req.body = JSON.parse(Object.keys(req.body)[0])
         }
         catch {
-            return res.render('error.ejs', {error:"Invalid JSON", description:"If god could explain to me just what the hell you were supplying as json I would be forever grateful"})
-
+            return res.render('error.ejs', {error:"Invalid JSON", description:"If God could explain to me just what exactly you were supplying as json I would be forever grateful [if you think this is a mistake, contact me]"})
         }
     }
 
@@ -492,6 +523,7 @@ app.post('/makeQuiz', function(req,res){
             checking[choiceParsed[1]].push(choiceParsed[2])
         }
     })
+
     console.log(checking)
     Object.keys(checking).forEach(key => {
         console.log("ANSWER CHECK! DOES ",key," HAVE AN ANSWER?? ", answerChecks[key] == undefined) // too lazy to formatstrings
@@ -572,41 +604,33 @@ app.post('/makeQuiz', function(req,res){
         UID = misc.createUnique()
         attempt = 0
         console.log(`${__dirname}/../quiz/${UID}.json exists? ${fs.existsSync(`${__dirname}/../quiz/${UID}.json`)}`)
-        while (fs.existsSync(`${__dirname}/../quiz/${UID}.json`)){
-            UID = misc.createUnique()
-            attempt++
-            if (attempt > 100){
+
+        const client = new pg.Client(settings);
+        client.connect();
+
+        exists = true
+
+
+        UID = misc.createUnique()
+        client.query("SELECT quizurl FROM search WHERE quizurl = $1", [`/quiz/${UID}`], (err, pgResult)=>{
+            if (pgResult.rows.length != 0) //if it exists
                 return res.render('error.ejs', {error:"Server Error", description:"Could not create unique ID. Try again later?"})
-            }
+            
 
-        }
+            base['name'] = quiz
+            quizPath = path.join(`${__dirname}/../quiz/`,`${UID}.json`)
 
-        base['name'] = quiz
-        quizPath = path.join(`${__dirname}/../quiz/`,`${UID}.json`)
-
-        fs.appendFile(quizPath,JSON.stringify(base,null,'\t'), function(){
-            res.redirect(`/quiz/${UID}`)
-        })
-
-
-        keywords = clean(req.body.keywords).split(','); //the spacing isnt really needed but it makes it easier to read
-        description = req.body.description
-        fs.readFile(path.join(`${__dirname}/../quiz/`,`data.json`), function(err,data){
-            data = JSON.parse(data.toString())
-            currentQuiz = data.length
-            data[currentQuiz] = {
-                id : UID,
-                name : quiz,
-                description : description,
-                keywords : keywords,
-                createdBy : username,
-                url:`/quiz/${UID}`
-            }
-
-            fs.writeFile(path.join(`${__dirname}/../quiz/`,`data.json`), JSON.stringify(data,null,'\t'), function(err){
-                console.log(err)
+            fs.appendFile(quizPath,JSON.stringify(base), function(){ //removed \t to save json space
+                res.redirect(`/quiz/${UID}`)
             })
+
+            keywords = clean(req.body.keywords).split(',').join('  '); //the spacing isnt really needed but it makes it easier to read
+            description = req.body.description
+
+            client.query("INSERT INTO search (quizname, quizdescription, quizurl, keywords, createdby) VALUES ($1,$2,$3,$4,$5);", [quiz, description,`/quiz/${UID}`,keywords,username])
+        
         })
+    
     }
 })
 

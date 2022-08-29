@@ -1,0 +1,27 @@
+{
+  "name": "node-postgres",
+  "version": "0.6.2",
+  "description": "PostgreSQL clinet",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "keywords": [
+    "database",
+    "pg",
+    "libpg",
+    "postgre",
+    "postgres",
+    "postgresql"
+  ],
+  "author": "Zhang Fu Xing <502545703@qq.com>",
+  "devDependencies": {
+    "mocha": "^6.2.0"
+  },
+  "homepage": "https://github.com/fuxingZhang/postgres",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fuxingZhang/postgres.git"
+  },
+  "license": "MIT"
+}

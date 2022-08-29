@@ -45,5 +45,8 @@ router.get('/quizmaker.js', async function(req,res){
 router.get('/menu.js', async function(req,res){
     res.sendFile(path.join(`${__dirname}/../misc/`,`menu.js`))
 })
+router.get('/ejs.min.js', async function(req,res){
+    res.sendFile(path.join(`${__dirname}/../misc/`,`ejs.min.js`))
+})
 
 module.exports = router

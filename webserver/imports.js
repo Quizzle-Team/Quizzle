@@ -1,7 +1,6 @@
 //npm imports 
 const express = require("express");
 const fs = require("fs");
-const jsearch = require("js-search")
 const ejs = require('ejs')
 const ws = require("ws")
 const cookieParser = require('cookie-parser')
@@ -19,7 +18,6 @@ module.exports = {
     jwt,
     express,
     fs,
-    jsearch,
     ejs,
     ws,
     miscRouting,

@@ -53,6 +53,8 @@
             }
         }
     </style>
+    <script src="ejs.min.js"></script> <!--Yes, I know its blocking, but I need these to be displayed the same time the page renders, so sorry ! its just 20 kb on a local connection, it'll be fine anyways-->
+    
 </head>
 <body>
     <div class="banner">
@@ -62,10 +64,26 @@
     <br>
     <br>
     <center>
-        <%-results%>
+        <div>
 
+        </div>
         <b><a href="/">Back to Home</a></b>
     </center>
 
 </body>
 </html>
+<script>
+    let searchResultTemplate = `<h4><a href="<%%=url%>"><%%=name%></a></h4><p class="description"><%%=description%></p>`
+    let results = atob("<%-results%>")
+    let final = ""
+    results = JSON.parse(results)
+    results.forEach(row=>{
+        let quizname = row["quizname"]
+        let qdescription = row["quizdescription"]
+        let qurl = row["quizurl"]
+        final += ejs.render(searchResultTemplate, {url:qurl,name:quizname,description:qdescription})
+    })
+    document.querySelector('center div').innerHTML = final
+    
+    //document.querySelector('center').innerHTML = final
+</script> 
