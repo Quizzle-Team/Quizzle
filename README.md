@@ -11,7 +11,7 @@ This is currently still in beta. There could be some bugs, and some potential vu
 
 If you find a bug, report it to @shrekman#5545 privately or report it the the #bug-report channel in https://discord.gg/4VDmfuBSFf
 
-It's lacking many features rn, like file upload and account creation*
+It's lacking many features rn, like file upload and account editing*
 
 Build Command: `docker compose build`
 Run Containers : `docker compose up`
