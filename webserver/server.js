@@ -7,15 +7,13 @@ keys.forEach(key => {global [key] = imports[key]}) //im a genius!!!
 const express = require('express')
 const authenticate = require("../modules/authentication.js")
 const { fs, path } = require("./imports.js")
-const { base64dec, hash, clean, base64enc } = require("../modules/misc.js")
-const { CLOSE_REASON_PROTOCOL_ERROR } = require("websocket/lib/WebSocketConnection")
+const { base64dec, hash, clean, base64enc, misc } = require("../modules/misc.js")
 const app = express();
 
 app.use(imports.middleWare) //i know i added it as a global variable but this is a cleaner way of showing it
 app.set('render engine','ejs')
 const pg = require('pg') //I wouldve kept it in the imports but this is a very important import and it helps to have better autocomplete for it
-const { query } = require("express")
-const { client } = require("websocket")
+
 fileHandlers = []
 
 var port = 8080;
@@ -31,7 +29,13 @@ const settings = {
     port:databasePort
 }
 
-
+function authRead(authString){
+    const basic = clean(authString).split(':')
+    return {
+        username:base64dec(basic[0]),
+        password:base64dec(basic[1])
+    }
+}
 
 
 console.log(settings)
@@ -45,16 +49,20 @@ app.get('/', function(req,res){
     res.render('index.ejs')
 })
 
-app.get('/admin/', function(req,res){ 
+app.get('/admin/', async function(req,res){ 
     if (req.cookies.auth){
         auth = clean(req.cookies.auth)
 
-        uname = base64dec(auth.split(':')[0])
-        password = base64dec(auth.split(':')[1])
+        data = authRead(auth)
+        uname = data.username
+        password=data.password
         console.log("/admin/ says uname: "+uname+" password: "+password)
-        if (authenticate(uname, hash(password))){
-            if (uname=="admin"){
-                console.log("uname is admin")
+        const authenticated = await authenticate(uname, hash(password), settings);
+        console.log("Am i authenticated?", authenticated)
+        if (authenticated){
+            const admin = await isAdmin(uname, hash(password))
+            if (admin){
+                console.log("uname is a confirmed admin")
                 return res.render('adminPanel.ejs')
             }
             return res.redirect('/teacher/')
@@ -63,18 +71,18 @@ app.get('/admin/', function(req,res){
     res.redirect('/signIn/')
 })
 
-app.get('/makeQuiz', function(req,res){
+app.get('/makeQuiz', async function(req,res){
 	auth = clean(req.cookies.auth)
 
-        uname = base64dec(auth.split(':')[0])
-        password = base64dec(auth.split(':')[1])
-
-        if (authenticate(uname, hash(password))){
-		return res.render('quizmaker.ejs');
-	}
+    uname = base64dec(auth.split(':')[0])
+    password = base64dec(auth.split(':')[1])
+    const authenticated = authenticate(uname, hash(password),settings)
+    if (authenticated){
+        return res.render('quizmaker.ejs');
+    }
 })
 
-app.get('/teacher/', function(req,res){
+app.get('/teacher/', async function(req,res){
     if (req.cookies.auth){
         auth = clean(req.cookies.auth)
 
@@ -82,26 +90,37 @@ app.get('/teacher/', function(req,res){
         password = base64dec(auth.split(':')[1])
 
         console.log(password)
-        
-        if (authenticate(uname, hash(password))){
-            if (uname == "admin"){
-                return res.redirect('/admin/')
-            }
-            return res.render("teacherPanel.ejs")
+        const authenticated = await authenticate(uname, hash(password), settings);
+        if (authenticated){
+            await isAdmin(uname,hash(password)) ? res.redirect('/admin/') : res.render("teacherPanel.ejs")
+            return
         }
     }
     res.redirect('/signIn/')
 })
 
 
-app.get('/signIn/', function(req,res){
+app.get('/signIn/', async function(req,res){
+    console.log(req.cookies)
     if (req.cookies.auth){
         auth = clean(req.cookies.auth).split(':')
         username = base64dec(auth[0])
         password = base64dec(auth[1])
 
-        console.log("signIn/ says uname: "+username+" password: "+password)
-        username=='admin' ? res.redirect('/admin/') : res.redirect('/teacher/');
+        const givenHash = hash(password)
+        console.log(givenHash);
+        const authenticated = await authenticate(username, givenHash, settings);
+        console.log("authenticated?", authenticated)
+        if (authenticated) await isAdmin(username,givenHash) ? res.redirect('/admin/') : res.redirect('/teacher/');
+        
+        
+        else {
+            data = {
+                error:"401 - Unauthorized",
+                description:"Invalid authentication"
+            }
+            return res.render("error.ejs", data)
+        }
         return;
     }
     res.render('signIn.ejs')
@@ -112,17 +131,19 @@ app.get('/logout', function(req,res){
     res.redirect('/signIn/')
 });
 
-app.post('/signIn/', function(req,res){
+app.post('/signIn/', async function(req,res){
     if (req.body.password && req.body.username){
         username = clean(req.body.username);
         password = clean(req.body.password);
-        const givenHash = misc.hash(password)
+        const givenHash = hash(password)
         console.log(givenHash);
-        if (authenticate(username, givenHash)){
+        const authenticated = await authenticate(username, givenHash, settings);
+        console.log("authenticated?", authenticated)
+        if (authenticated){
             //expire cookie in 1 day
-            res.cookie('auth', misc.base64enc(username)+":"+ misc.base64enc(password), {maxAge: 86400000, httpOnly: true, sameSite: "strict"})
+            res.cookie('auth', base64enc(username)+":"+ base64enc(password), {maxAge: 86400000, httpOnly: true, sameSite: "strict"})
 
-            username=='admin' ? res.redirect('/admin/') : res.redirect('/teacher/');
+            await isAdmin(username,givenHash) ? res.redirect('/admin/') : res.redirect('/teacher/');
         }
         
         else {
@@ -132,10 +153,69 @@ app.post('/signIn/', function(req,res){
             }
             return res.render("error.ejs", data)
         }
-
-        
     }
+})
+
+
+/*------------------
+      TEACHER
+      OPTIONS
+--------------------*/
+app.get('/changePass', function(req,res){
+    const client = new pg.Client(settings)
+    client.connect();
+})
+/*------------------
+      ADMIN 
+      PANEL
+--------------------*/
+
+async function isAdmin(username, hash){
+    const client = new pg.Client(settings)
+    client.connect();
+    const result = await client.query("SELECT administrator FROM users WHERE username = $1 AND pwdhash = $2", [username,hash])
+    console.log(result.rows)
+    if (result.rowCount != 0){
+        return result.rows[0].administrator
+    }
+
+    else {
+        return false
+    }
+}
+
+
+
+app.post("/makeAccount", async function(req,res){
+    console.log(req.body)
+    if (!req.cookies.auth){
+        return res.render("./error.ejs", {error:"401 - Unauthorized",description:"You must be authorized for this!"})
+    }
+
+
+    const dat = authRead(req.cookies.auth)
+
+    if (!(await isAdmin(dat.username, hash(dat.password)))){ //if the account details dont match up or dont exist, SQL wont pick it up anyways, so this works as an admin check AND auth check
+        return res.render("./error.ejs", {error:"401 - Unauthorized",description:"You must be an admin for this!"})
+    }
+    console.log("Passed all checks!")
+
+    const client = new pg.Client(settings)
+    client.connect();
+    username = req.body.username
+    hashedpassword = hash(req.body.password)
+    let final = await client.query("INSERT INTO users(username,pwdhash,administrator) VALUES ($1, $2, false) ON CONFLICT(username) DO NOTHING", [username,hashedpassword])
     
+    const result = await client.query("SELECT * FROM users")
+    res.render("./adminPanel.ejs")
+
+}) //test by creating and going to /admin/users/
+
+app.get('/admin/users', async function(req,res){
+    const client = new pg.Client(settings)
+    client.connect();
+    const result = client.query("SELECT * FROM users")
+    res.send(result)
 })
 
 
@@ -147,8 +227,10 @@ document.querySelectorAll('h4 > a').forEach(result =>{
 })
 */
 
-app.post('/removeQuiz', function(req,res){
 
+//DO NOT USE THIS ENDPOINT YET. IT NEEDS TO USE THE DATABASE!
+app.post('/removeQuiz', function(req,res){
+    return res.status(500).send("Temporarily unavailable!")
     req.cookies.auth == undefined ? auth = [req.body.username, req.body.password] : auth = req.cookies.auth.split(':')
 
     if (!req.body.username && !req.body.password){
@@ -162,7 +244,7 @@ app.post('/removeQuiz', function(req,res){
     username = misc.base64dec(username)
     pass = misc.base64dec(pass)
 
-    if (!authenticate(username, hash(pass))){
+    if (!authenticate(username, hash(pass), settings)){
         res.clearCookie('auth')
         return res.status(401).send("unauthorized")
     }
@@ -235,7 +317,7 @@ app.get('/search', function(req,res){
         const client = new pg.Client(settings);
         client.connect()
         console.log("escaped", client.escapeIdentifier(search), client.escapeLiteral(search))
-        client.query("SELECT * FROM search WHERE quizname LIKE $1",[`%${search}%`], (err,result)=>{ // %search% to allow finding words that contain the query
+        client.query("SELECT * FROM search WHERE quizname ILIKE $1",[`%${search}%`], (err,result)=>{ // %search% to allow finding words that contain the query
             if (err){
                 return res.render("./error.ejs", {error:"500 - Server Error", description:err})
             }
@@ -245,40 +327,6 @@ app.get('/search', function(req,res){
                 
             }
         })
-        console.log("!")
-
-        
-        /*
-        let query = new jsearch.Search('keywords')
-        query.addIndex('keywords')
-        query.addIndex('name')
-        rdata = fs.readFile(path.join(`${__dirname}/../`,`quiz/data.json`), function (err, data) {
-            if (err) return res.render('error.ejs', {error:"Something went wonky.", description:err});
-            data = JSON.parse(data.toString());
-            query.addDocuments(data)
-            let results = query.search(search)
-            let resList = Object.keys(results)
-            let htmlCollection =""
-            template = `
-            <h4><a href="<%=url%>"><%=name%></a></h4>
-            <p class="description"><%=description%></p>
-            `
-
-            
-            resList.forEach(element => {
-                let desc = results[element].quizname
-                let squery = results[element].name
-                let url = results[element].url
-
-                htmlCollection+=ejs.render(template, {url:url, description:desc, name:squery})
-            });
-
-            if (htmlCollection ==""){
-                htmlCollection = `<h2>!No results!</h2>`
-            }
-            res.render('results.ejs', {query:search, results:htmlCollection})
-        });
-        */
     }
 })
 
@@ -310,7 +358,7 @@ app.get('/quiz/:quiz', async function(req,res){
 
             for(let j=0;j<qList.length;j++) { //for each question
                 let qNum = qList[j]
-                color = misc.randColor();
+                color = randColor();
                 console.log(color)
                 answerChoices = "";
                 questionObject = questions[qNum];
@@ -319,7 +367,7 @@ app.get('/quiz/:quiz', async function(req,res){
                 
                 choiceList = questionObject[question]
                 console.log(choiceList)
-                misc.shuffle(choiceList) //without this, the first answer will always be right
+                shuffle(choiceList) //without this, the first answer will always be right
                 choiceList.forEach(choice => { //for choices in choicelist for the question
                     answerChoices += ejs.render(button, {color:color, text:choice, questionid:j})
                 })
@@ -601,17 +649,13 @@ app.post('/makeQuiz', function(req,res){
             }
         })
 
-        UID = misc.createUnique()
-        attempt = 0
-        console.log(`${__dirname}/../quiz/${UID}.json exists? ${fs.existsSync(`${__dirname}/../quiz/${UID}.json`)}`)
-
         const client = new pg.Client(settings);
         client.connect();
 
         exists = true
 
 
-        UID = misc.createUnique()
+        UID = createUnique()
         client.query("SELECT quizurl FROM search WHERE quizurl = $1", [`/quiz/${UID}`], (err, pgResult)=>{
             if (pgResult.rows.length != 0) //if it exists
                 return res.render('error.ejs', {error:"Server Error", description:"Could not create unique ID. Try again later?"})

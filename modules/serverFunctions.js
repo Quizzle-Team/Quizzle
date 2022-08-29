@@ -3,7 +3,7 @@ const fs = require('fs');
 var logFile = fs.createWriteStream(path.join(`${__dirname}/`,'../log.txt'), {flags : 'a+'});
 
 function maskHeaders(req,res,next){
-    if (!res.headersSent)res.setHeader('X-Powered-By', 'Quiz-Server-V1.0.0');
+    if (!res.headersSent)res.setHeader('X-Powered-By', 'Quiz-Server-V1.2.0');
     next();
 }
 function logger(req,res,next){

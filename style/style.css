@@ -78,7 +78,7 @@ button {
   color:white;
 }
 
-.score {
+.score, .popup {
   display: flex;
   width: 70%;
   height: 70vh;
@@ -254,3 +254,4 @@ section a{
 [contenteditable="true"] {
   outline: 2px dashed white;
 }
+
