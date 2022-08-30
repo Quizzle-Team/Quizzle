@@ -7,11 +7,14 @@ keys.forEach(key => {global [key] = imports[key]}) //im a genius!!!
 const express = require('express')
 const authenticate = require("../modules/authentication.js")
 const { fs, path } = require("./imports.js")
-const { base64dec, hash, clean, base64enc, misc } = require("../modules/misc.js")
+const miscObj = require("../modules/misc.js")
+keys = (Object.keys(miscObj))
+keys.forEach(key => {global [key] = miscObj[key]}) //im a genius YET AGAIN! I forgot to make it import all misc things, so it failed instantly! [this is the fix :shocked:]!!!
 const app = express();
 
 app.use(imports.middleWare) //i know i added it as a global variable but this is a cleaner way of showing it
 app.set('render engine','ejs')
+
 const pg = require('pg') //I wouldve kept it in the imports but this is a very important import and it helps to have better autocomplete for it
 
 fileHandlers = []
@@ -119,6 +122,7 @@ app.get('/signIn/', async function(req,res){
                 error:"401 - Unauthorized",
                 description:"Invalid authentication"
             }
+            res.clearCookie('auth') //i got stuck in an infinite invalid auth loop :thumbs_up:
             return res.render("error.ejs", data)
         }
         return;
@@ -206,9 +210,8 @@ app.post("/makeAccount", async function(req,res){
     hashedpassword = hash(req.body.password)
     let final = await client.query("INSERT INTO users(username,pwdhash,administrator) VALUES ($1, $2, false) ON CONFLICT(username) DO NOTHING", [username,hashedpassword])
     
-    const result = await client.query("SELECT * FROM users")
+    //const result = await client.query("SELECT * FROM users")
     res.render("./adminPanel.ejs")
-
 }) //test by creating and going to /admin/users/
 
 app.get('/admin/users', async function(req,res){
@@ -385,9 +388,7 @@ app.get('/quiz/:quiz', async function(req,res){
 
 WServer.on("connection", async function(wsclient){
     let wMessages = 0;
-    let answers = {
-
-    };
+    let answers = {};
     let currentQ = 0;
     let quiz = "";
     let validQuiz = undefined;
@@ -487,12 +488,25 @@ WServer.on("connection", async function(wsclient){
 
 
 
-app.post('/makeQuiz', function(req,res){
-    auth = clean(req.cookies.auth).split(':')
-    username = base64dec(auth[0])
-    password = base64dec(auth[1])
+app.post('/makeQuiz', async function(req,res){
 
-    if (!authenticate(username, hash(password))){
+    if (!req.cookies.auth){
+        return res.render('error.ejs', {error:"Authentication Error", description:"You are not logged in!"})
+    }
+
+    auth = clean(req.cookies.auth).split(':')
+    let username = "";
+    let password = "";
+
+    try {
+        username = base64dec(auth[0])
+        password = base64dec(auth[1])
+    } catch (e){ //either b64 failed or list index out of range
+        return res.render('error.ejs', {error:"HTTP 293849898 - why did you that", description:"Give a valid cookie next time!"})
+    }
+
+    const authenticated = await authenticate(username, hash(password),settings);
+    if (!authenticated){
         res.status(401)
         return res.render('error.ejs', {error:"Authentication Error", description:"You are not logged in!"})
     }
@@ -516,7 +530,7 @@ app.post('/makeQuiz', function(req,res){
             req.body = JSON.parse(Object.keys(req.body)[0])
         }
         catch {
-            return res.render('error.ejs', {error:"Invalid JSON", description:"If God could explain to me just what exactly you were supplying as json I would be forever grateful [if you think this is a mistake, contact me]"})
+            return res.render('error.ejs', {error:"Invalid JSON", description:"If God could explain to me just what exactly you were supplying as json then my life would be complete [if you think this is a mistake, contact me]"})
         }
     }
 
