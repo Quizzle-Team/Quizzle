@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1, width=device-width" />
+    <title>Quizzle - User Edit Panel</title>
+    <link rel="icon" href="/favicon.svg" sizes="any" type="image/svg+xml">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/tables.css">
+    <script src="/menu.js"></script>
+    <script src="/tableFill.js" defer></script>
+    <style>
+    form>button{border:2px solid #dfdfdf;}
+    
+    .dots {
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+    .w-40 {
+        width: 40%;
+    }
+    .basic {
+        overflow-wrap:anywhere;
+        overflow:hidden;
+    }
+    </style>
+</head>
+
+<body style="display:flex;flex-direction: column;">
+    <div class="popup-darken invis"></div>
+    <div class="banner" style="display: flex;justify-content: space-between;">
+        <div class="logo">
+            <img src="/favicon.svg">
+            <h1>Quizzle</h1>
+        </div>
+        <div class="options">
+            <h2><a href="/">Home</a></h2>
+            <h2><a href="/signin">Account</a></h2>
+
+        </div>
+    </div>
+    <content>
+        <div class="panel">
+            
+            <div class="sep"></div>
+            <h1>- EDIT USERS -</h1>
+            <div class="sep"></div>
+            <table>
+                <colgroup>
+                    <col style="width:10%;text-align:center;">
+                    <col class="w-40 basic">
+                    <col class="dots">
+                    <col class="basic">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th scope="col">[  ]</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Password Hash</th>
+                        <th scope="col">Admin</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                </tbody>
+            </table>
+            <div>
+                <div style="height:3em"></div>
+                <h3 class="nav"><move onclick="back()"><-</move>   Page <pnum contenteditable="true">1</pnum> out of <total></total>   <move onclick="front()">-></move></h3>
+                <div style="height:3em"></div>
+            </div>
+
+        </div>
+    </content>
+</body>
+
+</html>

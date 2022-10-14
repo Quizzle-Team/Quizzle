@@ -1,3 +1,15 @@
+//give the questions some colors
+document.querySelectorAll('.hold>h1').forEach(e=>{
+    qid = e.getAttribute("qid")
+    color = `hsl(${Math.random() * 360}deg, 60%, 50%)`
+    e.style.color = color
+    document.querySelectorAll(`[questionid='${qid}']`).forEach(q=>{
+        q.style.background = color
+    })
+})
+
+
+
 function glow(qid, color=undefined){
 
     if (color==undefined){
@@ -64,6 +76,7 @@ function startKeepAliveLoop(){
 }
 
 function closeDialog(){
+    document.querySelector(".popup-darken").classList.toggle("invis")
     scoreDiv = document.getElementsByClassName('score')[0];
     scoreDiv.style.marginTop = '10px';
     setTimeout(function(){
@@ -93,7 +106,7 @@ function eoq(){
             })
 
             window.removeEventListener("beforeunload",callback)
-            center = document.getElementsByTagName("center")[0];
+            center = document.getElementsByTagName("content")[0];
             center.innerHTML = "<div class='score' style='opacity:0;'></div>\n"+center.innerHTML;
             setTimeout(function(){
                 results = results.split('|')[1]
@@ -116,6 +129,8 @@ function eoq(){
                 <h2>${((parseInt(results.split('/')[0])/parseInt(results.split('/')[1]))*100).toFixed(2)}% correct!</h2>
                 <div class='sep'></div>
                 `
+
+                document.querySelector(".popup-darken").classList.toggle("invis")
 
                 scoreDiv.style.opacity = 1;
                 setTimeout(function(){
@@ -165,7 +180,7 @@ function process(element){
     var e = new XMLHttpRequest();
     domain = location.hostname;
     portnum = 8000;
-    webSock.send(`${qid}|${element.innerText}`)
+    webSock.send(`${qid}|${btoa(element.innerText)}`)
     
     
     console.log(element.innerText)

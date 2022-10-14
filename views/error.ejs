@@ -3,24 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1, width=device-width" />
     <title>Quizzle - Error</title>
-    <link rel="icon" href="favicon.ico" type="image/x-icon" />
-    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="icon" href="/favicon.svg" sizes="any" type="image/svg+xml">
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <div class="banner">
-        <h1>Error</h1>
+    <div class="banner" style="display: flex;justify-content: space-between;">
+        <div class="logo">
+            <img src="/favicon.svg">
+            <h1>Quizzle</h1>
+        </div>
+        <div class="options">
+            <h2><a href="/">Home</a></h2>
+            <h2><a href="/signin">Account</a></h2>
+        </div>
     </div>
-    <br>
-    <br>
-    <br>
-    <center>
+    <content>
+        <br>
+        <br>
+        <br>
         <h1><%-error%></h1>
         <h1><%-description%></h1>
 
         <b><a href="/">Back to Home</a></b>
-    </center>
+    </content>
 
 </body>
 </html>

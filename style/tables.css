@@ -1,0 +1,22 @@
+table {
+    width:100%;
+    border-spacing: 1px;
+    table-layout: fixed;
+}
+tr > *{
+    border: 2px solid #7349ff;
+    border-spacing: 0;
+}
+
+th {
+    padding: 10px;
+}
+tr>th:last-child {
+    border-radius: 0px 12px 0 0;
+}
+tr>th:first-child {
+    border-radius: 12px 0px 0 0;
+}
+td {
+    font-weight: 800;
+}

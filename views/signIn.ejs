@@ -3,19 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1, width=device-width" />
     <title>Quizzle - Sign In</title>
-    <link rel="icon" href="favicon.ico" type="image/x-icon" />
-    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="icon" href="/favicon.svg" sizes="any" type="image/svg+xml">
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <div class="banner">
-        <h1>Quizzle</h1>
+    <div class="banner" style="display: flex;justify-content: space-between;">
+        <div class="logo">
+            <img src="/favicon.svg">
+            <h1>Quizzle</h1>
+        </div>
+        <div class="options">
+            <h2><a href="/">Home</a></h2>
+            <h2><a selected="true">Account</a></h2>
+        </div>
+
     </div>
-    <br>
-    <br>
-    <br>
-    <center>
+    <content>
+        <br>
+        <br>
+        <br>
         <div class="hold">
             <h1> - SIGN IN - </h1>
             <div class="sep"></div>
@@ -24,10 +32,10 @@
                 <input type="text" name="username" id="uname"><br><br>
                 <h2>PASSWORD</h2>
                 <input type="password" name="password" id="pass"><br><br>
-                <input type="submit" value="GO!">
+                <input type="submit" value="GO!" style="color:white;padding: 20px;width: 20%;max-width: 225px;min-width: 150px;border-radius: 14px;background: #5522ff;border: 0;">
             </form>
         </div>
-    </center>
+    </content>
 </body>
 </html>
 

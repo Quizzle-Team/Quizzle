@@ -11,27 +11,22 @@ module.exports = {
             //pick a random element
             randomIndex = Math.floor(Math.random() * currentIndex);
             currentIndex--;
-            //and swap it with the current element.
+            //and swap it with the current element
             [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
         }
         return array;
     },
-    randColor : function(){
-        color = Math.floor(Math.random()*16777215)
-        color<5592405 ? color += (5592405-color)*2:null
-        color= "#"+color.toString(16).toString()
-        return color
-    },
     base64enc : function(str) {return Buffer.from(str).toString('base64');},
     base64dec : function(str){return Buffer.from(str, 'base64').toString('ascii')},
     isClean : function(str){
+        _clean = true
         matchList = ["/", "\\.\\.", "%2F", "%2E%2E", "%5C"]
         matchList.forEach(match=>{
             if (str.match(match) != null){
-                return false
+                _clean = false
             }
         })
-        return true
+        return _clean
     },
     clean : function(str){ //prevents hpp, since js isnt type strict and allows me to try string stuff on arrays causing the whole thing to crash
         if (str.constructor == Object)str = JSON.stringify(str)

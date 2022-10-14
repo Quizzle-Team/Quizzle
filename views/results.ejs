@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1, width=device-width" />
     <title>Quizzle - Results for <%=query%></title>
-    <link rel="icon" href="favicon.ico" type="image/x-icon" />
-    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="icon" href="/favicon.svg" sizes="any" type="image/svg+xml">
     <link rel="stylesheet" href="/style.css">
     <style>
         a{
@@ -57,33 +57,44 @@
     
 </head>
 <body>
-    <div class="banner">
-        <h1>Results for <i><%=query%></i></h1>
+    <div class="banner" style="display: flex;justify-content: space-between;">
+        <div class="logo">
+            <img src="/favicon.svg">
+            <h1>Quizzle</h1>
+        </div>
+        <div class="options">
+            <h2><a href="/">Home</a></h2>
+            <h2><a href="/signin">Account</a></h2>
+        </div>
+
     </div>
-    <br>
-    <br>
-    <br>
-    <center>
+    <content>
+        <br>
+        <br>
+        <br>
         <div>
 
         </div>
-        <b><a href="/">Back to Home</a></b>
-    </center>
+    </content>
 
 </body>
 </html>
 <script>
-    let searchResultTemplate = `<h4><a href="<%%=url%>"><%%=name%></a></h4><p class="description"><%%=description%></p>`
     let results = atob("<%-results%>")
     let final = ""
-    results = JSON.parse(results)
-    results.forEach(row=>{
-        let quizname = row["quizname"]
-        let qdescription = row["quizdescription"]
-        let qurl = row["quizurl"]
-        final += ejs.render(searchResultTemplate, {url:qurl,name:quizname,description:qdescription})
-    })
-    document.querySelector('center div').innerHTML = final
-    
-    //document.querySelector('center').innerHTML = final
+    if (results = '[]'){
+        final = "<h1>No Results!</h1>"
+    }
+    else {
+
+        results = JSON.parse(results)
+        let searchResultTemplate = `<h4><a href="<%%=url%>"><%%=name%></a></h4><p class="description"><%%=description%></p>`
+        results.forEach(row=>{
+            let quizname = row["quizname"]
+            let qdescription = row["quizdescription"]
+            let qurl = row["quizurl"]
+            final += ejs.render(searchResultTemplate, {url:qurl,name:quizname,description:qdescription})
+        })
+    }
+    document.querySelector('content div').innerHTML = final
 </script> 

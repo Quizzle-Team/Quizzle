@@ -1,13 +1,13 @@
 {
   "name": "quizzle",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "web",
   "main": "webserver/server.js",
   "scripts": {
     "server": "node webserver/server.js"
   },
   "author": "Quizzle-Team / Bedros Pamboukian",
-  "license": "ISC",
+  "license": "BSD-4-Clause",
   "dependencies": {
     "cookie-parser": "^1.4.6",
     "ejs": "^3.1.7",
@@ -26,5 +26,10 @@
     "url": "https://github.com/Quizzle-Team/Quizzle/issues"
   },
   "homepage": "https://github.com/Quizzle-Team/Quizzle#readme",
-  "devDependencies": {}
+  "devDependencies": {},
+  "keywords": [
+    "quiz",
+    "quiz",
+    "app"
+  ]
 }

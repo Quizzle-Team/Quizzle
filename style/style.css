@@ -1,37 +1,85 @@
 *{
   transition:200ms linear;
+  --font:'Jost','sans-serif';
 }
 body {
     margin:0;
     font-family:'Montserrat','sans-serif';
-    background:#0a0a0a;
+    background: #ffffff;
   }
-  
-  .banner {
-    text-align:center;
-    padding:20px;
-    font-family:'Montserrat','sans-serif';
-    background: rgb(6 4 6);
-    color:white;
-  }
+
+.banner {
+  text-align:center;
+  padding:10px;
+  font-family:'Montserrat','sans-serif';
+  background: rgb(255 255 255);
+  color: white;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-inline: auto;
+  width: 95%;
+
+}
+.logo {
+  padding:10px;
+  padding-bottom: 0;
+}
+
+.options>h2 {
+  padding-inline: 8px;
+}
+.options {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.hold {
+  display: flex;
+  flex-direction: column;
+}
+
+.panel.hold {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.panel > button{
+  padding: 15px;
+  max-width: 450px;
+  width: 75%;
+  min-width: 230px;
+  padding-inline: 60px;
+  background: white;
+  border: 12px solid #5522ff;
+  border-bottom: 0;
+  border-radius: 24px 24px 12px 12px;
+  font-family: var(--font);
+  font-size: 26px;
+  margin-top: 10px;
+  margin-inline: 2px;
+}
+
 
 h1,h2,h3,h4 {
   margin:0;
-  color:white;
-    font-family:'Jost','sans-serif';
-  }
+  color: #7349ff;
+  font-family:var(--font);
+}
 
 input:not([type="file"]) {
   padding: 20px;
-  box-shadow: inset 0px -1px 19px -3px black;
-  background: white;
+  background: #ffffff00;
   border: 0;
-  border-radius: 23px;
+  padding-bottom: 3px;
+  border-bottom: 2px solid #5522ff;
   text-transform: uppercase;
   font-size: large;
   outline: none;
-  font-family: 'Jost','sans-serif';
-  
+  font-family: var(--font);
 }
 input[type="search"]::-webkit-search-cancel-button{
   -webkit-appearance: none;
@@ -43,7 +91,7 @@ input[type="search"]::-webkit-search-cancel-button{
 }
 
 a{
-  color: white;
+  color: #5522ff;
   font-size: 26px;
 }
 
@@ -59,26 +107,28 @@ button {
   background:white;
   border:none;
   border-radius: 24px;
-  font-family: 'Jost','sans-serif';
+  font-family:var(--font);
   font-size:26px;
   margin-top:10px;
   margin-inline:2px
 }
 
 .sep {
-  animation: expandSeparator .5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   margin: 10px;
   margin-inline: 1vw;
   height: 2px;
-  background: white;
-  
+  background: #7349ff;
 }
 
 .description {
-  color:white;
+  color: #341599;
+  font-size: 1.2rem;
+  margin-top: 0px;
+  font-weight: 600;
 }
 
 .score, .popup {
+  z-index: 4;
   display: flex;
   width: 70%;
   height: 70vh;
@@ -87,10 +137,19 @@ button {
   transform: translate(-50%, 0);
   right: auto;
   border-radius: 24px;
-  background: #1a1c1d;
-  box-shadow: 0 0 20px 0px #1a1c1d;
+  background: #fbfbfb;
   flex-direction: column;
   justify-content: space-evenly;
+  max-width: 1000px;
+}
+
+@media (max-width:550px) {
+  .score, .popup {
+    width: 100%;
+    height: 100%;
+    top: 0;
+    border-radius: 0;
+  }
 }
 
 
@@ -103,12 +162,11 @@ input[type="file"]::-webkit-file-upload-button {
   text-transform: uppercase;
   font-size: large;
   outline: none;
-  font-family: 'Jost','sans-serif';
 }
 
 label {
   color:white;
-  font-family: 'Jost','sans-serif';
+  font-family:var(--font);
   font-size:26px;
 }
 
@@ -189,15 +247,6 @@ label {
 }
 
 
-@keyframes expandSeparator {
-  0% {
-    transform: scaleX(0);
-  }
-  100% {
-    transform: scaleX(1);
-  }
-}
-
 .hold {
   padding-inline:20vw;
 }
@@ -215,7 +264,6 @@ label {
 
 
 sep {
-  animation: expandSeparator .5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   margin: 10px;
   margin-inline: 5vw;
   height: 2px;
@@ -223,19 +271,23 @@ sep {
   display:flex;
 }
 
+.options>h2>a {
+  text-decoration: none;
+}
+
 section p{
   font-size:25px;
   font-family: 'Montserrat', sans-serif;
-  font-weight:100;
-  color:white;
+  font-weight: 700;
+  color: #5522ff;
   margin-inline:1vw;
 }
 section a{
   text-decoration: none;
-  text-shadow: 0px 0px 7px white;
+  text-shadow: 0px 0px 3px #5522ff;
 }
 
-
+/*
 @media (pointer:none), (pointer:coarse){
   h1,h2,h3,h4 {
     font-size:36px;
@@ -249,9 +301,120 @@ section a{
   body{
     background-color:#0d0d0d;
   }
-}
+}*/
 
 [contenteditable="true"] {
   outline: 2px dashed white;
+}
+
+
+
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+}
+
+
+
+h2>a[selected="true"]:after {
+  top: 110%;
+  left: -2px;
+  
+  border: solid transparent;
+  border-color: #7349ff;
+  border-width: 3px;
+  border-radius: 50px;
+
+  content: " ";
+  height: 0;
+  width: 100%;
+  position: absolute;
+  background-color: #7349ff;
+}
+h2>a[selected="true"]{
+  display: inline-block;
+  position: relative;
+  z-index: 2;
+  /* border: 1px solid #f33; */
+}
+
+content {
+  display: block;
+  text-align: -webkit-center;
+  margin-inline: auto;width: 95%;border-top: 2px solid #dfdfdf;
+}
+
+.popup-darken {
+  transition-property:display;
+  background: #00000059;
+  position: fixed;
+  height: 100%;
+  width: 100%;
+  z-index: 3;
+}
+
+.invis {
+  display:none;
+}
+
+.customButton {
+  padding: 15px;
+  max-width: 450px;
+  width: 75%;
+  min-width: 230px;
+  padding-inline: 60px;
+  background: white;
+  border: 12px solid #5522ff;
+  border-bottom: 0;
+  border-radius: 24px 24px 12px 12px;
+  font-family: var(--font);
+  font-size: 26px;
+  margin-top: 10px;
+  margin-inline: 2px;
+}
+
+.options>h2>a {
+  color: #7349ff !important;
+}
+
+.logo {
+  display:
+  flex;
+  align-content: center;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.logo>img {
+  display:none;
+  height: 2.5em;
+}
+
+@media (max-width:410px){
+  .logo>img{
+    display:block;
+  }
+  .logo>h1 {
+    display:none;
+  }
+}
+
+pnum {
+  border: 2px solid;
+  padding: 7px;
+  border-radius: 5px;
+}
+
+move {
+  margin-inline: 2em;
+  cursor:pointer;
 }
 

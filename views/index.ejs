@@ -1,40 +1,49 @@
-<!DOCTYPE html>
-<html lang="en">
-<head> 
+ 
+<html lang="en"><head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1, width=device-width" />
     <title>Quizzle</title>
-    <link rel="icon" href="favicon.ico" type="image/x-icon" />
-    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+
+    <link rel="icon" href="/favicon.svg" sizes="any" type="image/svg+xml">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="banner", style="display:flex">
-        <h1 style="width: 100%;">Quizzle</h1>
-        <img onclick="document.location.href='/signIn'" height="64px" src="/user.svg" alt="user" class="user">
+    <div class="banner">
+        <div class="logo">
+            <img src="/favicon.svg">
+            <h1>Quizzle</h1>
+        </div>
+        <div class="options">
+            <h2><a selected="true">Home</a></h2>
+            <h2><a href="/signin">Account</a></h2>
+        </div>
     </div>
-    <br>
-    <br>
-    <br>
-    <center>
+
+
+
+    <content>
+        <br><br><br>
         <h1>SEARCH FOR YOUR IDEAL QUIZ!</h1>
         <div class="hold">
 
-            <form action="/search" method="get">
-                <input type="search" name="search" id="searchbar">
+            <form action="/search" method="get" style="display: flex;justify-content: center;">
+                <input type="search" name="search" placeholder="Search for a quiz!" id="searchbar">
             </form>
             <h3>Just search for a keyword you want to learn!!!</h3>
         </div>
-        <br /><br /> <!--epic mobile compatibility (VERY REAL)-->
+        <br><br> <!--epic mobile compatibility (VERY REAL)-->
         <section>
             <sep></sep>
-            <h2>About Quizzle</h5>
+            <h1 style="font-size: 2rem;">About Quizzle</h1>
             <p>Quizzle is an <a href="https://github.com/Quizzle-Team/Quizzle">open source</a> quiz system</p>
-            <p><b>Originally designed for The Winchester School for local usage.</b></p>
+            <p><b>Originally designed for The Winchester School for local usage, but later published on GitHub!</b></p>
         </section>
 
         <!--Made by Bedros Pamboukian https://github.com/SemiConductorShortage https://pastrikk.com/-->
-        
-    </center>
-</body>
-</html>
+
+    </content>
+
+
+</body></html>
+

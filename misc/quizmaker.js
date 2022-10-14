@@ -5,7 +5,7 @@ function fSubmit(){
     input.setAttribute('name',"quizname")
     input.id="quizname"
     input.value = document.querySelector('[contenteditable]').innerText
-    document.body.querySelector('form').insertBefore(input, document.querySelector('h2:not([contenteditable])')) 
+    document.body.querySelector('form').insertBefore(input, document.querySelector('h2[contenteditable]')) 
     document.body.querySelector('form').submit()
 }
 

@@ -14,14 +14,15 @@ const app = express();
 
 app.use(imports.middleWare) //i know i added it as a global variable but this is a cleaner way of showing it
 app.set('render engine','ejs')
+app.use(express.json())
 
 const pg = require('pg') //I wouldve kept it in the imports but this is a very important import and it helps to have better autocomplete for it
+const { base64dec, isClean, base64enc } = require("../modules/misc.js")
 
 fileHandlers = []
 
 var port = 8080;
 var host = '0.0.0.0'
-
 
 databasePort = 5432;
 const settings = {
@@ -147,28 +148,19 @@ app.post('/signIn/', async function(req,res){
             //expire cookie in 1 day
             res.cookie('auth', base64enc(username)+":"+ base64enc(password), {maxAge: 86400000, httpOnly: true, sameSite: "strict"})
 
-            await isAdmin(username,givenHash) ? res.redirect('/admin/') : res.redirect('/teacher/');
-        }
-        
-        else {
-            data = {
-                error:"401 - Unauthorized",
-                description:"Invalid authentication"
-            }
-            return res.render("error.ejs", data)
+            return (await isAdmin(username,givenHash) ? res.redirect('/admin/') : res.redirect('/teacher/'));
         }
     }
+    data = {
+        error:"401 - Unauthorized",
+        description:"Invalid authentication"
+    }
+    return res.render("error.ejs", data)
+    
 })
 
 
-/*------------------
-      TEACHER
-      OPTIONS
---------------------*/
-app.get('/changePass', function(req,res){
-    const client = new pg.Client(settings)
-    client.connect();
-})
+
 /*------------------
       ADMIN 
       PANEL
@@ -178,6 +170,8 @@ async function isAdmin(username, hash){
     const client = new pg.Client(settings)
     client.connect();
     const result = await client.query("SELECT administrator FROM users WHERE username = $1 AND pwdhash = $2", [username,hash])
+    await client.end()
+
     console.log(result.rows)
     if (result.rowCount != 0){
         return result.rows[0].administrator
@@ -199,28 +193,59 @@ app.post("/makeAccount", async function(req,res){
 
     const dat = authRead(req.cookies.auth)
 
-    if (!(await isAdmin(dat.username, hash(dat.password)))){ //if the account details dont match up or dont exist, SQL wont pick it up anyways, so this works as an admin check AND auth check
+    const admin = await isAdmin(dat.username, hash(dat.password))
+    if (!admin){ //if the account details dont match up or dont exist, SQL wont pick it up anyways, so this works as an admin check AND auth check
         return res.render("./error.ejs", {error:"401 - Unauthorized",description:"You must be an admin for this!"})
     }
     console.log("Passed all checks!")
 
+    if (!req.body.password || !req.body.username){
+        return res.render("./error.ejs", {error:"400 - Bad Request",description:"You must include the proper body!"})
+    }
     const client = new pg.Client(settings)
     client.connect();
     username = req.body.username
     hashedpassword = hash(req.body.password)
     let final = await client.query("INSERT INTO users(username,pwdhash,administrator) VALUES ($1, $2, false) ON CONFLICT(username) DO NOTHING", [username,hashedpassword])
-    
+    await client.end()
     //const result = await client.query("SELECT * FROM users")
     res.render("./adminPanel.ejs")
 }) //test by creating and going to /admin/users/
 
+app.post("/editAccount", async function(req,res){
+    console.log(req.body)
+    if (!req.cookies.auth){
+        return res.render("./error.ejs", {error:"401 - Unauthorized",description:"You must be authorized for this!"})
+    }
+
+
+    const dat = authRead(req.cookies.auth)
+    const authenticated = await authenticate(dat.username, hash(dat.password), settings);
+
+    const admin = await isAdmin(username, hash(password))
+    const canModify = admin || authenticated
+
+    if (!canModify)
+        return res.render("./error.ejs", {error:"401 - Unauthorized",description:"You cannot modify this password!"})
+
+    const client = new pg.Client(settings)
+    client.connect();
+    username = dat.username
+    hashedpassword = hash(req.body.password)
+    let final = await client.query("UPDATE users SET pwdhash = $2 WHERE username = $1", [username,hashedpassword])
+    await client.end()
+    res.render("./adminPanel.ejs")
+})
+
+
+/*
 app.get('/admin/users', async function(req,res){
     const client = new pg.Client(settings)
     client.connect();
-    const result = client.query("SELECT * FROM users")
-    res.send(result)
+    const result = await client.query("SELECT * FROM users")
+    res.send(result.rows)
 })
-
+*/
 
 /*
 document.querySelectorAll('h4 > a').forEach(result =>{
@@ -230,70 +255,6 @@ document.querySelectorAll('h4 > a').forEach(result =>{
 })
 */
 
-
-//DO NOT USE THIS ENDPOINT YET. IT NEEDS TO USE THE DATABASE!
-app.post('/removeQuiz', function(req,res){
-    return res.status(500).send("Temporarily unavailable!")
-    req.cookies.auth == undefined ? auth = [req.body.username, req.body.password] : auth = req.cookies.auth.split(':')
-
-    if (!req.body.username && !req.body.password){
-        if (req.cookies.auth == undefined){ //yes i can shove it into one if statement but this way is more readable for me
-            return res.status(401).send("No authorization given")
-        }
-    }
-
-    const {username, pass} = auth
-    
-    username = misc.base64dec(username)
-    pass = misc.base64dec(pass)
-
-    if (!authenticate(username, hash(pass), settings)){
-        res.clearCookie('auth')
-        return res.status(401).send("unauthorized")
-    }
-
-    if (req.body.id){
-        fs.readFile(`${__dirname}/../quiz/data.json`, 'utf8', function(err, data){
-            if (err){
-                console.log(err)
-                return res.status(500).send("Internal server error")
-            }
-            data = JSON.parse(data)
-            selectedQuiz = c.filter(function(dat){
-                return (dat['url']==`/quiz/${req.body.id}`)
-            })[0]
-
-            if (!selectedQuiz){
-                return res.status(404).send("Quiz not found")
-            }
-
-            if (selectedQuiz['createdBy'] != username){
-                return res.status(401).send("Unauthorized")
-            }
-
-            delete data[data.indexOf(selectedQuiz)]
-
-            
-            fs.writeFile(`${__dirname}/../quiz/data.json`, JSON.stringify(data), function(err){
-                if (err){
-                    console.log(err)
-                    return res.status(500).send("Internal server error")
-                }
-                
-            })
-            fs.unlink(path.join(`${__dirname}/../quiz/`,`${req.body.id}.json`), function(err){
-                if (err){
-                    console.log(err)
-                }
-                return res.send('success')
-            })
-
-        })
-    }
-    else {
-        return res.status(400).send("No id given")
-    }
-})
 
 
 
@@ -315,12 +276,19 @@ app.get('/search', function(req,res){
         let originalSearch = search;
         typeof search=='object' ? search = search[0] : null; //HPP prevention, otherwise it'll crash when /search?search=hi&search=bye
         search = search.replace("\\","\\\\").replace("%","\\%") //To prevent wildcards being placed, query would just be % and everything would match, so here's the fix
+        search = search.trim(); // sunglass emoji here
         console.log(search)
+
+        if (search==""){
+            return res.render("./error.ejs", {error:"400 - Bad request!", description:"Hello student where are your parameters"})
+        }
 
         const client = new pg.Client(settings);
         client.connect()
         console.log("escaped", client.escapeIdentifier(search), client.escapeLiteral(search))
-        client.query("SELECT * FROM search WHERE quizname ILIKE $1",[`%${search}%`], (err,result)=>{ // %search% to allow finding words that contain the query
+
+        client.query("SELECT * FROM search WHERE quizname ILIKE $1 OR quizdescription ILIKE $1 OR keywords ILIKE $1",[`%${search}%`], (err,result)=>{ // %search% to allow finding words that contain the query
+            client.end()
             if (err){
                 return res.render("./error.ejs", {error:"500 - Server Error", description:err})
             }
@@ -340,7 +308,6 @@ app.get('/search', function(req,res){
 
 app.get('/quiz/:quiz', async function(req,res){
     let quiz = req.params.quiz
-    console.log(quiz.match('/'))
     
     if (quiz.match("/") != null || quiz.match("\\.\\.")  != null || quiz.match("%2F")  != null || quiz.match("%2E%2E") !=null ){
         return res.render('error.ejs', {error:"why", description:"you know what you did"})
@@ -356,29 +323,23 @@ app.get('/quiz/:quiz', async function(req,res){
             mainJSON = JSON.parse(data.toString())
             questions = mainJSON.questions;
             qList = Object.keys(questions);
-            qHeader = `<div class='sep'></div><div class='sep'></div><h1 qid="<%-questionid%>" style="color:<%=color%>;text-transform:uppercase;letter-spacing:4px;"><%=text%></h1>\n<div class='sep'></div><div class="buttonFlex"><%-buttons%></div>`
-            button = '<button style="background:<%=color%>" questionid="<%-questionid%>" onclick="process(this)"><%=text%></button>'
+            qHeader = `<div class='sep'></div><div class='sep'></div><h1 qid="<%=questionid%>" style="text-transform:uppercase;letter-spacing:4px;"><%=text%></h1>\n<div class='sep'></div><div class="buttonFlex"><%-buttons%></div>`
+            button = '<button questionid="<%=questionid%>" onclick="process(this)"><%=text%></button>'
 
             for(let j=0;j<qList.length;j++) { //for each question
                 let qNum = qList[j]
-                color = randColor();
-                console.log(color)
                 answerChoices = "";
                 questionObject = questions[qNum];
                 question = Object.keys(questionObject)[0]
-                console.log(question)
                 
                 choiceList = questionObject[question]
-                console.log(choiceList)
                 shuffle(choiceList) //without this, the first answer will always be right
                 choiceList.forEach(choice => { //for choices in choicelist for the question
-                    answerChoices += ejs.render(button, {color:color, text:choice, questionid:j})
+                    answerChoices += ejs.render(button, {text:choice, questionid:j})
                 })
-                qHTML += ejs.render(qHeader, {color:color, text:question, buttons:answerChoices, questionid:j})
-                console.log(qHTML)
+                qHTML += ejs.render(qHeader, {text:question, buttons:answerChoices, questionid:j})
             };
 
-            console.log(questions)
             res.render('quiz.ejs', {questionHTML:qHTML, title:mainJSON.name})
         });
     }
@@ -404,13 +365,12 @@ WServer.on("connection", async function(wsclient){
                     console.log("End of quiz!!")
                     console.log(quizJSON)
                     questionJSON = quizJSON["questions"]
-                    
                     let correctAnswers = 0;
                     console.log(answers)
-
+                    
                     Object.keys(questionJSON).forEach(currentQ => {
                         correctAnswer = questionJSON[currentQ.toString()]["CorrectAnswer"];
-                        if (answers[(parseInt(currentQ)-1).toString()] == correctAnswer){
+                        if (answers[(parseInt(currentQ)-1).toString()] == base64enc(correctAnswer)){
                             correctAnswers++
                         }
                     });
@@ -545,53 +505,53 @@ app.post('/makeQuiz', async function(req,res){
     answerChecks = {}
     try{
 
-    Object.keys(req.body).forEach(key => {
-        console.log(key)
-        if (typeof key != "string")throw new Error("Invalid JSON : Key not a string");
-        if (req.body[key].trim() == "")throw new Error("Invalid JSON : Empty Key");
-        
-        protPollution = function(key){
-            if (key.trim() == "prototype" || key.trim() == "__proto__" || key.trim() == "constructor"){
-                return true
+        Object.keys(req.body).forEach(key => {
+            console.log(key)
+            if (typeof key != "string")throw new Error("Invalid JSON : Key not a string");
+            if (req.body[key].trim() == "")throw new Error("Invalid JSON : Empty Key");
+            
+            protPollution = function(key){
+                if (key.trim() == "prototype" || key.trim() == "__proto__" || key.trim() == "constructor"){
+                    return true
+                }
             }
-        }
-        if (protPollution(key))throw new Error("Stop trying to hack me wahhhh")
-        if (protPollution(req.body[key]))throw new Error("Stop trying to hack me wahhhh")
-        
-        
+            if (protPollution(key))throw new Error("Stop trying to hack me wahhhh")
+            if (protPollution(req.body[key]))throw new Error("Stop trying to hack me wahhhh")
+            
+            
 
-        if (key.startsWith("question:")){
-            console.log("Found a question", key)
-            if (key.split(':').length != 2)throw new Error("Invalid JSON : Question key is not in the format question:<number>")
-            
-            if (isNaN(key.split(':')[1].replace(' ','')))throw new Error("Invalid JSON : Question id is not a number")
-            
-            checking[key.split(':')[1]] = []
-            console.log("CHECKING  :")
-            console.log(checking)
-        }
-        else if (key.startsWith("choice:")){
-            fmat = "The JSON you sent was invalid! choice:<questionID>:<choiceId> / choice:<questionID>:<choiceId>:correct should be followed!"
-            choiceParsed = key.split(':')
-            if (choiceParsed.length < 3)throw new Error(fmat)
-            
-            if (choiceParsed.length >= 4 && choiceParsed[3] != "correct")throw new Error(fmat) //yes, multiple `if` statements, dont care!!
-            if (isNaN(choiceParsed[2]))throw new Error(fmat)
-            if (checking[choiceParsed[1]] == undefined)throw new Error("The JSON you sent was invalid! That question doesnt exist!")
-            
-            console.log("Am i correct? ", choiceParsed[3] == "correct", `ALSO ${choiceParsed}`)
-            if (choiceParsed[3] == "correct")answerChecks[choiceParsed[1]] = true
-            
-            checking[choiceParsed[1]].push(choiceParsed[2])
-        }
-    })
+            if (key.startsWith("question:")){
+                console.log("Found a question", key)
+                if (key.split(':').length != 2)throw new Error("Invalid JSON : Question key is not in the format question:<number>")
+                
+                if (isNaN(key.split(':')[1].replace(' ','')))throw new Error("Invalid JSON : Question id is not a number")
+                
+                checking[key.split(':')[1]] = []
+                console.log("CHECKING  :")
+                console.log(checking)
+            }
+            else if (key.startsWith("choice:")){
+                fmat = "The JSON you sent was invalid! choice:<questionID>:<choiceId> / choice:<questionID>:<choiceId>:correct should be followed!"
+                choiceParsed = key.split(':')
+                if (choiceParsed.length < 3)throw new Error(fmat)
+                
+                if (choiceParsed.length >= 4 && choiceParsed[3] != "correct")throw new Error(fmat) //yes, multiple `if` statements, dont care!!
+                if (isNaN(choiceParsed[2]))throw new Error(fmat)
+                if (checking[choiceParsed[1]] == undefined)throw new Error("The JSON you sent was invalid! That question doesnt exist!")
+                
+                console.log("Am i correct? ", choiceParsed[3] == "correct", `ALSO ${choiceParsed}`)
+                if (choiceParsed[3] == "correct")answerChecks[choiceParsed[1]] = true
+                
+                checking[choiceParsed[1]].push(choiceParsed[2])
+            }
+        })
 
-    console.log(checking)
-    Object.keys(checking).forEach(key => {
-        console.log("ANSWER CHECK! DOES ",key," HAVE AN ANSWER?? ", answerChecks[key] == undefined) // too lazy to formatstrings
-        if (checking[key].length < 2)throw new Error("You need at least 2 choices for each question!")
-        if (answerChecks[key] == undefined)throw new Error("You need to specify if a question is correct!")
-    })
+        console.log(checking)
+        Object.keys(checking).forEach(key => {
+            console.log("ANSWER CHECK! DOES ",key," HAVE AN ANSWER?? ", answerChecks[key] == undefined) // too lazy to formatstrings
+            if (checking[key].length < 2)throw new Error("You need at least 2 choices for each question!")
+            if (answerChecks[key] == undefined)throw new Error("You need to specify if a question is correct!")
+        })
 
     }
     catch (e){
@@ -670,11 +630,13 @@ app.post('/makeQuiz', async function(req,res){
 
 
         UID = createUnique()
-        client.query("SELECT quizurl FROM search WHERE quizurl = $1", [`/quiz/${UID}`], (err, pgResult)=>{
-            if (pgResult.rows.length != 0) //if it exists
+        console.log("Created unique!")
+        client.query("SELECT quizurl FROM search WHERE quizurl = $1", [`/quiz/${UID}`], async (err, pgResult)=>{
+            if (pgResult.rows.length != 0){
+                await client.end()
                 return res.render('error.ejs', {error:"Server Error", description:"Could not create unique ID. Try again later?"})
+            } //if it exists
             
-
             base['name'] = quiz
             quizPath = path.join(`${__dirname}/../quiz/`,`${UID}.json`)
 
@@ -685,14 +647,339 @@ app.post('/makeQuiz', async function(req,res){
             keywords = clean(req.body.keywords).split(',').join('  '); //the spacing isnt really needed but it makes it easier to read
             description = req.body.description
 
-            client.query("INSERT INTO search (quizname, quizdescription, quizurl, keywords, createdby) VALUES ($1,$2,$3,$4,$5);", [quiz, description,`/quiz/${UID}`,keywords,username])
+            await client.query("INSERT INTO search (quizname, quizdescription, quizurl, keywords, createdby) VALUES ($1,$2,$3,$4,$5);", [quiz, description,`/quiz/${UID}`,keywords,username])
+            await client.end()
         
         })
     
     }
 })
 
+/*-Quiz Lister-*/
+app.get("/created/myQuizzes", async function(req,res){
+
+})
+
+app.get("/admin/userEdit", async function(req,res){
+    if (req.cookies.auth == undefined)
+        return res.status(401).send("No authorization given")
+    
+
+    const {username, password} = authRead(req.cookies.auth)
+    
+    
+    const admin = await isAdmin(username, hash(password)) //acts as both authentication and admin checker, see line 171
+    
+    if (!admin)
+        return res.status(401).render('error.ejs', {error:"Unauthorized", description:"You aren't meant to be here!"})
+    
+    res.render("./userEdit.ejs")
+
+
+})
+
+app.get('/admin/users', async (req, res) => {
+    if (req.cookies.auth == undefined)
+        return res.status(401).send("No authorization given")
+    
+
+    const {username, password} = authRead(req.cookies.auth)
+    
+    
+    
+    const admin = await isAdmin(username, hash(password))
+    
+    if (!admin)
+        return res.status(401).render('error.ejs', {error:"Unauthorized", description:"You aren't meant to be here!"})
+
+    const client = new pg.Client(settings)
+    client.connect();
+    let result;
+    if (req.query.page){
+        page = req.query.page
+        if (isNaN(parseInt(page)))
+            return res.send([{"username":"Invalid Number", "pwdhash":"Invalid Number","administrator":"???"}])
+        page*=100
+        result = await client.query("SELECT * FROM users LIMIT 100 OFFSET $1", [page])
+    }
+    else {
+        result = await client.query("SELECT * FROM users LIMIT 100")
+    }
+    return res.send(result.rows);
+    
+
+})
+
+app.get('/admin/userCount', async (req, res) => {
+    if (req.cookies.auth == undefined)
+        return res.status(401).send("No authorization given")
+    
+
+    const {username, password} = authRead(req.cookies.auth)
+    
+    
+    
+    const admin = await isAdmin(username, hash(password))
+    
+    if (!admin)
+        return res.status(401).render('error.ejs', {error:"Unauthorized", description:"You aren't meant to be here!"})
+
+    const client = new pg.Client(settings)
+    client.connect();
+    let result;
+    result = await client.query("SELECT COUNT(*) FROM users")
+
+    return res.send(result.rows[0]);
+})
+
+app.get('/admin/delete', async function(req,res){
+    if (req.cookies.auth == undefined)
+        return res.status(401).send("No authorization given")
+
+
+    const {username, password} = authRead(req.cookies.auth)
+
+
+
+
+    if (req.query.user){
+        console.log(req.query.user)
+        console.log(username,password)
+        const admin = await isAdmin(username, hash(password))
+
+        if (!admin)
+            return res.status(401).render('error.ejs', {error:"Unauthorized", description:"You aren't meant to be here!"})
+
+        
+        const client = new pg.Client(settings)
+        client.connect();
+        let result;
+        result = await client.query("SELECT * FROM users WHERE username=$1", [req.query.user])
+        if (result.rows.length == 0)
+            return res.status(500).send("invalid user")
+        let _res = result.rows[0]
+        console.log(_res)
+        if (_res.administrator==true)
+            return res.status(401).send("no perms")
+        
+        result = await client.query("DELETE FROM users WHERE username=$1", [req.query.user])
+        return res.status(200).send("done")
+    }
+})
+//The endpoint to modify a user
+app.post("/admin/modifyUser", async function(req,res){
+    console.log(req.body)
+    params = req.body
+    if (!(params.originalName && (params.username || params.password))  )
+        return res.status(400).send("bad request")
+    
+
+    const {username, password} = authRead(req.cookies.auth)
+    const admin = await isAdmin(username, hash(password))
+    if (!admin)
+        return res.status(401).send("unauthorized/forbidden")
+    
+
+
+    let targetname = params.originalName //targetname is the name of the person we're modifying
+    const client = new pg.Client(settings)
+    client.connect();
+    let userexists = (await client.query("SELECT * FROM users WHERE username = $1", [targetname])).rowCount != 0
+    if (!userexists){
+        res.status(400).send("user doesnt exist in order to modify!")
+    }
+    
+    if (params.username && !(params.username == targetname)){
+        let exists = (await client.query("SELECT * FROM users WHERE username = $1", [params.username])).rowCount != 0
+        if (exists)
+            return res.status(403).send("username conflicts with existing user!")
+        
+        let final = await client.query("UPDATE users SET username = $1 WHERE username = $2", [params.username, targetname])
+        targetname = params.username
+    }
+    if (params.password){
+        await client.query("UPDATE users SET pwdhash = $1 WHERE username = $2", [hash(params.password), targetname])
+        
+    }
+
+    await client.end()
+    return res.status(200).send("done")
+
+})
+
+//quiz delete panel code starts now
+app.get("/user/quizDelete", async function(req,res){
+    if (req.cookies.auth == undefined)
+        return res.status(401).send("No authorization given")
+    
+
+    const {username, password} = authRead(req.cookies.auth)
+    
+    const authenticated = await authenticate(username,hash(password),settings)
+
+    if (!authenticated)
+        return res.status(401).render('error.ejs', {error:"Unauthorized", description:"You aren't meant to be here!"})
+    
+    res.render("./qDelete.ejs")
+})
+
+
+app.get('/user/quizzes', async function(req,res){
+    if (req.cookies.auth == undefined)
+        return res.status(401).send("No authorization given")
+    
+
+    const {username, password} = authRead(req.cookies.auth)
+    
+    
+    
+    const admin = await isAdmin(username, hash(password))
+    let authenticated = admin
+    if (!admin)
+        authenticated = await authenticate(username,hash(password),settings)
+    
+    if (!authenticated){
+        return res.status(401).send("unauthorized")
+    }
+    const client = new pg.Client(settings)
+    client.connect();
+    let result;
+
+
+    if (admin){
+        if (req.query.page){
+            page = req.query.page
+            if (isNaN(parseInt(page)))
+            return res.send([{"username":"Invalid Number", "pwdhash":"Invalid Number","administrator":"???"}])
+            page*=100
+            result = await client.query("SELECT * FROM search LIMIT 100 OFFSET $1", [page])
+        }
+        else {
+            result = await client.query("SELECT * FROM search LIMIT 100")
+        }
+    }
+    else {
+        if (req.query.page){
+            page = req.query.page
+            if (isNaN(parseInt(page)))
+                return res.send([{"quizname":"Invalid Number", "pwdhash":"Invalid Number","administrator":"???"}])
+            page*=100
+            result = await client.query("SELECT * FROM search WHERE createdby = $1 LIMIT 100 OFFSET $2", [username, page])
+        }
+        else {
+            console.log(username)
+            result = await client.query("SELECT * FROM search WHERE createdby = $1 LIMIT 100", [username])
+        }
+    }
+
+
+    return res.send(result.rows);
+    
+})
+
+app.post('/removeQuiz', async function(req,res){
+    console.log(req.body)
+    console.log(req.body)
+    console.log(req.body)
+    console.log(req.body)
+    if (!req.body.username && !req.body.password){
+        if (req.cookies.auth == undefined){ //yes i can shove it into one if statement but this way is more readable for me
+            return res.status(401).send("No authorization given")
+        }
+    }
+
+    let auth;
+    //if no cookies specifying authentication, use the authentication from the body
+    if (req.cookies.auth == undefined){
+        auth = {username:req.body.username,pass:req.body.password}
+    }
+    else {
+        auth = authRead(req.cookies.auth)
+        auth = {username:auth.username,pass:auth.password}
+    }
+    
+
+
+    const {username, pass} = auth
+
+    const authenticated = await authenticate(username, hash(pass), settings)
+    if (!authenticated){
+        res.clearCookie('auth')
+        return res.status(401).send("unauthorized")
+    }
+    if (req.body.quizurl){
+        const client = new pg.Client(settings)
+        client.connect();
+
+        const exists = await client.query("SELECT * FROM search WHERE quizurl = $1", [req.body.quizurl])
+
+        if (exists.rowCount == 0)
+            return res.send("doesnt exist")
+
+        const admin = await isAdmin(username, hash(pass))
+
+        
+        const result = await client.query("SELECT * FROM search WHERE createdby = $1 AND quizurl = $2", [username,req.body.quizurl])
+        console.log(result.rowCount)
+        const owner = result.rowCount != 0 //if rowcount not equal to 0, it exists and a match has been made
+
+        const canDelete = admin || owner
+
+        if (!canDelete){
+            return res.status(401).send("You are not allowed to delete this quiz!")
+        }
+        //STEPS
+        await client.query("DELETE FROM search WHERE quizurl = $1", [req.body.quizurl])
+        await client.end();
+        fs.unlink(path.join(`${__dirname}/../quiz/`,`${req.body.quizurl.replace("/quiz/","")}.json`), function(err){ //delete .json
+            if (err){
+                return res.status(500).send("error")
+            }
+            return res.send('success')
+        })
+    }
+    else {
+        return res.status(400).send("No id given")
+    }
+})
+
+
+app.get('/user/quizCount', async function(req,res){
+    if (req.cookies.auth == undefined)
+        return res.status(401).send("No authorization given")
+    
+
+    const {username, password} = authRead(req.cookies.auth)
+    
+    
+    
+    const admin = await isAdmin(username, hash(password))
+    let authenticated = admin
+    if (!admin)
+        authenticated = await authenticate(username,hash(password),settings)
+    
+    if (!authenticated){
+        return res.status(401).send("unauthorized")
+    }
+    const client = new pg.Client(settings)
+    client.connect();
+    let result;
+
+
+    if (admin){
+        result = await client.query("SELECT COUNT(*) FROM search")
+    }
+    
+    else {
+        result = await client.query("SELECT COUNT(*) FROM search WHERE createdby = $1", [username])
+    }
+    
+
+    return res.send(result.rows[0]);
+    
+})
+
 
 app.listen(port, host,function(data){
-    console.log(`App is running on port ${port}\nGo to the page with http://localhost:${port}/\nAdmin page http://localhost:${port}/admin/signin\n\n --LOGGING--\n`)
+    console.log(`App is running on port ${port}\nGo to the page with http://localhost:${port}/\nAdmin page http://localhost:${port}/signin\n\n --LOGGING--\n`)
 })

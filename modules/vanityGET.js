@@ -7,7 +7,9 @@ const path = require('path');
 router.get('/style.css', async function(req,res){
     res.sendFile(path.join(`${__dirname}/../style/`,`style.css`))
 })
-
+router.get('/tables.css', async function(req,res){
+    res.sendFile(path.join(`${__dirname}/../style/`,`tables.css`))
+})
 //mp3
 router.get('/ding.mp3', async function(req,res){
     res.sendFile(path.join(`${__dirname}/../misc/`,`ding.mp3`))
@@ -23,21 +25,22 @@ router.get('/close.svg', async function(req,res){
 router.get('/x.svg', async function(req,res){
     res.sendFile(path.join(`${__dirname}/../style/`,`x.svg`))
 })
-router.get('/user.svg', async function(req,res){
-    res.sendFile(path.join(`${__dirname}/../style/`,`user.svg`))
-})
-router.get('/door.svg', async function(req,res){
-    res.sendFile(path.join(`${__dirname}/../style/`,`logout_door.svg`))
+router.get('/pencil.svg', async function(req,res){
+    res.sendFile(path.join(`${__dirname}/../style/`,`pencil.svg`))
 })
 
+
 //favicon
-router.get('/favicon.ico', function(req,res){
-    res.sendFile(path.join(`${__dirname}/`,'../style/favicon.ico'))
+router.get('/favicon.svg', function(req,res){
+    res.sendFile(path.join(`${__dirname}/`,'../style/logo.svg'))
 })
 
 //javascript
 router.get('/quiz.js', async function(req,res){
     res.sendFile(path.join(`${__dirname}/../misc/`,`quiz.js`))
+})
+router.get('/tableFill.js', async function(req,res){
+    res.sendFile(path.join(`${__dirname}/../misc/`,`tableFill.js`))
 })
 router.get('/quizmaker.js', async function(req,res){
     res.sendFile(path.join(`${__dirname}/../misc/`,`quizmaker.js`))
@@ -47,6 +50,9 @@ router.get('/menu.js', async function(req,res){
 })
 router.get('/ejs.min.js', async function(req,res){
     res.sendFile(path.join(`${__dirname}/../misc/`,`ejs.min.js`))
+})
+router.get('/papaparse.min.js', async function(req,res){
+    res.sendFile(path.join(`${__dirname}/../misc/`,`papaparse.min.js`))
 })
 
 module.exports = router

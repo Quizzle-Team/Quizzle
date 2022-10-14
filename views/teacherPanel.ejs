@@ -4,25 +4,38 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1, width=device-width" />
     <title>Quizzle - Teacher Panel</title>
-    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/favicon.svg" sizes="any" type="image/svg+xml">
     <link rel="stylesheet" href="/style.css">
-    <script src="/menu.js"></script>
+    <script defer src="/menu.js"></script>
+    <style>form>button{border:2px solid #dfdfdf;}</style>
 </head>
 
-<body style="display:flex;flex-direction:row;">
-    <center style="width: 100%;">
-        <div style="height: 64px;">
-            <img onclick="document.location.href='/logout'" id="logout" src="/door.svg">
+<body style="display:flex;flex-direction: column;">
+    <div class="popup-darken invis"></div>
+    <div class="banner" style="display: flex;justify-content: space-between;">
+        <div class="logo">
+            <img src="/favicon.svg">
+            <h1>Quizzle</h1>
         </div>
-        <div class="hold">
+        <div class="options">
+            <h2><a href="/">Home</a></h2>
+            <h2><a selected="true">Account</a></h2>
+
+        </div>
+    </div>
+    <content>
+        <div class="panel hold">
             <div class="sep"></div>
             <h1>- TEACHER PANEL -</h1>
             <div class="sep"></div>
             <button onclick="quiz()">Quiz Maker</button>
             <button onclick="account()">Change Password</button>
+            <button onclick="quizzes()">Edit Quizzes</button>
+            <button onclick="document.location.href='/logout'">Logout</button>
         </div>
-    </center>
+    </content>
 </body>
 
 </html>
