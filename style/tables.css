@@ -1,10 +1,10 @@
 table {
     width:100%;
-    border-spacing: 1px;
+    border-spacing: .2em;
     table-layout: fixed;
+    border-collapse: collapse;
 }
 tr > *{
-    border: 2px solid #7349ff;
     border-spacing: 0;
 }
 
@@ -17,6 +17,9 @@ tr>th:last-child {
 tr>th:first-child {
     border-radius: 12px 0px 0 0;
 }
-td {
-    font-weight: 800;
+td,th {
+    font-weight: normal;
+}
+tr {
+    border-top: 2px solid var(--secondaryColor);
 }

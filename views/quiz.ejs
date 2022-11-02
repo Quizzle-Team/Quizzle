@@ -34,11 +34,30 @@
         </div>
         <br />
 
-        <button style="border: 5px solid #7349ff;" onclick="eoq()">Submit!</button>
+        <button style="border: 5px solid var(--secondaryColor);" onclick="eoq()">Submit!</button>
         <br />
         <br />
         <br />
     </content>
+    <script>
+        recent = localStorage.getItem("visited")
+        quizid = document.location.href.split("/").slice(-1) //list by default, handy
 
+        final = ""
+        if (recent == null){
+            final = JSON.stringify({
+                data:quizid
+            })
+        }
+        else {
+            data = JSON.parse(recent).data
+            data.unshift(quizid[0])          //unshift so that Set removes the OLD duplicate, whereas a .push element thats duplicated stays stationary  
+            data = Array.from(new Set(data)) //new Set() just to remove duplicates the easy way
+            final = JSON.stringify({
+                data:data.slice(-5)
+            })
+        }
+        localStorage.setItem("visited", final)
+    </script>
 </body>
 </html>

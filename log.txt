@@ -1,5 +1,0 @@
-
-[Mon Sep 26 2022 17:16:03 GMT+0400 (Gulf Standard Time)] 127.0.0.1 GET /
-[Mon Sep 26 2022 20:57:33 GMT+0400 (Gulf Standard Time)] 127.0.0.1 GET /
-[Mon Sep 26 2022 20:58:04 GMT+0400 (Gulf Standard Time)] 127.0.0.1 GET /
-[Mon Sep 26 2022 20:59:08 GMT+0400 (Gulf Standard Time)] 127.0.0.1 GET /search?search=cyber

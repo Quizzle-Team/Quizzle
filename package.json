@@ -1,6 +1,6 @@
 {
   "name": "quizzle",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "web",
   "main": "webserver/server.js",
   "scripts": {
@@ -26,7 +26,6 @@
     "url": "https://github.com/Quizzle-Team/Quizzle/issues"
   },
   "homepage": "https://github.com/Quizzle-Team/Quizzle#readme",
-  "devDependencies": {},
   "keywords": [
     "quiz",
     "quiz",

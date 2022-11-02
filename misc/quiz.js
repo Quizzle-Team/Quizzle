@@ -66,8 +66,10 @@ window.addEventListener("beforeunload", callback, {capture: true});
   
 
 domain = location.hostname;
-portnum = 8000;
-var webSock = new WebSocket(`ws://${domain}:${portnum}/quizSocket`);
+
+
+
+var webSock = new WebSocket(`ws://${domain}/quizSocket`);
 
 function startKeepAliveLoop(){
     loopInterval = setInterval(function(){
@@ -185,4 +187,9 @@ function process(element){
     
     console.log(element.innerText)
 }
+
+//previously viewed storing
+
+norepeat = [1,2,3,4,5,6,7,8,9,8,7,6,5,6,7,8,536,345,345,5,34,53,45,345,345,34,534,5,67]
+localStorage.setItem("recent",Array.from(new Set(norepeat)))
 

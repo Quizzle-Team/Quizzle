@@ -1,0 +1,36 @@
+content > h1 {
+    font-weight: 100;
+}
+.cdescription>*{
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.discover .thumbnail .cdescription {
+    width: -webkit-fill-available;
+}
+.discover.cards {
+    scrollbar-color: #6969dd #e0e0e0;
+    scrollbar-width: thin;
+    display: flex;
+    overflow-x: scroll;
+    box-shadow: -100px 0px 84px -94px inset white;
+}
+
+.cards::-webkit-scrollbar {
+    height: .5em;
+}
+
+.cards::-webkit-scrollbar-track {
+    background: #00000000;
+}
+
+.cards::-webkit-scrollbar-thumb {
+    background-color: #a6a6a6;
+    border-radius: 10px;
+}
+
+.thumbnail {
+    cursor:pointer;
+}

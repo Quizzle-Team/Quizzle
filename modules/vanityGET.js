@@ -10,6 +10,10 @@ router.get('/style.css', async function(req,res){
 router.get('/tables.css', async function(req,res){
     res.sendFile(path.join(`${__dirname}/../style/`,`tables.css`))
 })
+router.get('/index.css', async function(req,res){
+    res.sendFile(path.join(`${__dirname}/../style/`,`index.css`))
+})
+
 //mp3
 router.get('/ding.mp3', async function(req,res){
     res.sendFile(path.join(`${__dirname}/../misc/`,`ding.mp3`))
@@ -32,7 +36,7 @@ router.get('/pencil.svg', async function(req,res){
 
 //favicon
 router.get('/favicon.svg', function(req,res){
-    res.sendFile(path.join(`${__dirname}/`,'../style/logo.svg'))
+    return res.sendFile(path.join(`${__dirname}/`,'../style/logo.svg'))
 })
 
 //javascript

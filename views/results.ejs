@@ -82,7 +82,7 @@
 <script>
     let results = atob("<%-results%>")
     let final = ""
-    if (results = '[]'){
+    if (results == '[]'){
         final = "<h1>No Results!</h1>"
     }
     else {
@@ -92,7 +92,7 @@
         results.forEach(row=>{
             let quizname = row["quizname"]
             let qdescription = row["quizdescription"]
-            let qurl = row["quizurl"]
+            let qurl = `/quiz/${row["quizurl"]}`
             final += ejs.render(searchResultTemplate, {url:qurl,name:quizname,description:qdescription})
         })
     }

@@ -1,13 +1,15 @@
 services:
   quizzle:
     container_name: quizzle
-    image: quizzle:1.3.0
+    image: quizzle:1.3.1
     build:
       context: .
     ports: 
-      - 8080:8080
-      - 8000:8000
+      - ${quizzlePort:-80}:8080
+      - ${wsPort:-8000}:8000
     environment:
+      - publicPort=${quizzlePort:-80}
+      - wsPort=${wsPort:-8000}
       - PGUSER=quizzleAdmin
       - PGDATABASE=quizzleDB
       - PGPASSWORD=12345

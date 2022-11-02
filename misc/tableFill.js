@@ -126,8 +126,8 @@ function confdeleteUser(){
 	center.innerHTML = "<div class='popup' style='opacity:1;z-index:5;box-shadow:0 0 2px 2px black'></div>\n"+center.innerHTML;
 
     template = `
-    <button type="button" onclick="deleteUser(this)"  style="height: 100%;border: 2px solid #7349ff;">CONFIRM DELETE</button>
-    <button type="button" onclick="this.parentElement.remove()" style="height: 100%;border: 2px solid #7349ff;">DO NOT DELETE</button>
+    <button type="button" onclick="deleteUser(this)"  style="height: 100%;border: 2px solid var(--secondaryColor);">CONFIRM DELETE</button>
+    <button type="button" onclick="this.parentElement.remove()" style="height: 100%;border: 2px solid var(--secondaryColor);">DO NOT DELETE</button>
     `
     popup = document.querySelector('.popup')
 	popup.innerHTML = template
