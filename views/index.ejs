@@ -68,33 +68,33 @@
                 current.setAttribute("onclick", `navigate(${quiz.quizurl})`)
             })
         })
+        async function process(){
+            recent = localStorage.getItem("visited")
 
-        recent = localStorage.getItem("visited")
-
-        if (recent != null){
-            data = JSON.parse(recent).data
-            data.forEach((quizid)=>{
-                console.log("fetching quiz",quizid)
-                fetch(`/quizinfo?quiz=${quizid}`).then(e=>e.json()).then(async (quizinfo)=>{
-                    console.log(quizinfo)
-                    quiz = quizinfo[0]
-
-                    console.log(quiz)
+            if (recent != null){
+                data = JSON.parse(recent).data
+                console.log(data)
+                for (quizid of data){
+                    console.log("fetching quiz",quizid)
+                    let quiz = await fetch(`/quizinfo?quiz=${quizid}`)
+                    let qJSON = await quiz.json()
+                
+                    
+                    let quizData = qJSON[0]
+                    console.log(quizData)
                     row = document.getElementsByClassName('cards viewed')[0];
 
                     card = template.cloneNode(true)
                     row.appendChild(card)
-                    
-                    const current = document.querySelector('.viewed>*:last-child')
-                    current.getElementsByTagName('p')[0].innerText=quiz.quizdescription
-                    current.getElementsByTagName('h2')[0].innerText=quiz.quizname
-                    current.setAttribute("onclick", `navigate(${quiz.quizurl})`)
-                
-                })
-                
-                
-            })
+
+                    current = document.querySelector('.viewed>*:last-child')
+                    current.getElementsByTagName('p')[0].innerText=quizData.quizdescription
+                    current.getElementsByTagName('h2')[0].innerText=quizData.quizname
+                    current.setAttribute("onclick", `navigate(${quizData.quizurl})`)
+                }
+            }
         }
+        process()
     </script>
 </body>
 </html>
