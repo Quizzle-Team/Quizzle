@@ -74,19 +74,22 @@
         if (recent != null){
             data = JSON.parse(recent).data
             data.forEach((quizid)=>{
+                console.log("fetching quiz",quizid)
+                fetch(`/quizinfo?quiz=${quizid}`).then(e=>e.json()).then(async (quizinfo)=>{
+                    console.log(quizinfo)
+                    quiz = quizinfo[0]
 
-                fetch(`/quizinfo?quiz=${quizid}`).then(e=>e.json()).then(quizinfo=>{
-                    quizinfo.forEach(quiz=>{
-                        row = document.getElementsByClassName('cards viewed')[0];
+                    console.log(quiz)
+                    row = document.getElementsByClassName('cards viewed')[0];
 
-                        card = template.cloneNode(true)
-                        row.appendChild(card)
-                        
-                        const current = document.querySelector('.viewed>*:last-child')
-                        current.getElementsByTagName('p')[0].innerText=quiz.quizdescription
-                        current.getElementsByTagName('h2')[0].innerText=quiz.quizname
-                        current.setAttribute("onclick", `navigate(${quiz.quizurl})`)
-                    })
+                    card = template.cloneNode(true)
+                    row.appendChild(card)
+                    
+                    const current = document.querySelector('.viewed>*:last-child')
+                    current.getElementsByTagName('p')[0].innerText=quiz.quizdescription
+                    current.getElementsByTagName('h2')[0].innerText=quiz.quizname
+                    current.setAttribute("onclick", `navigate(${quiz.quizurl})`)
+                
                 })
                 
                 
