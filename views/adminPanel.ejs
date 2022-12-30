@@ -11,7 +11,18 @@
 
     <link rel="stylesheet" href="/style.css">
     <script src="/menu.js" defer></script>
-    <style>form>button{border:2px solid #dfdfdf;}</style>
+    <style>
+    form>button{border:2px solid #dfdfdf;}
+    @media (max-width:410px){
+            .panel.hold{
+                padding:0;
+            }
+            .panel.hold > button {
+                width:100%;
+                max-width:none;
+            }
+        }
+    </style>
 </head>
 
 <body style="display:flex;flex-direction: column;">

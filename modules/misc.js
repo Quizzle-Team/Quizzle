@@ -1,4 +1,5 @@
 crypto = require('crypto')
+var nullbyte = new RegExp(/\0/g)
 
 module.exports = {
     hash : function(string){
@@ -31,8 +32,7 @@ module.exports = {
     clean : function(str){ //prevents hpp, since js isnt type strict and allows me to try string stuff on arrays causing the whole thing to crash
         if (str.constructor == Object)str = JSON.stringify(str)
         typeof str=='object' ? str = str.toString() : null; 
-
-        return str;
+        return str.replace(nullbyte, "");
     },
     createUnique : function(){
         return crypto.randomUUID().toString().toUpperCase();

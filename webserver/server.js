@@ -8,10 +8,13 @@ const express = require('express')
 const http = require('http')
 const https = require('https')
 
+var nullbyte = new RegExp(/\0/g)
+
 async function authenticate(username, hash){
+    username = username.replace(nullbyte,"")
     const client = await userPool.connect();
     const result = await client.query("SELECT * FROM users WHERE username = $1 AND pwdhash = $2", [username,hash])
-    await client.release()
+    client.release()
 
     return (result.rowCount != 0) //if rowcount not equal to 0, it exists and a match has been made
 }
@@ -64,7 +67,7 @@ const searchPool = new pg.Pool({
 
 function authRead(authString){
     console.log(authString.split(":"))
-    if (authString.split(":").length == 1){
+    if (authString.split(":").length == 1 || authString == ":"){
         console.log("gotcha")
         return {
             username:"",
@@ -100,17 +103,20 @@ app.get('/whoami', function(req,res){
 app.get('/admin/', async function(req,res){ 
     if (req.cookies.auth){
         const auth = clean(req.cookies.auth)
-
-        const {username,password} = authRead(auth)
+        
+        let {username,password} = authRead(auth)
+        //username = username.replace(nullbyte)
         const authenticated = await authenticate(username, hash(password));
+        console.log("checking auth")
         
         if (authenticated){
             const admin = await isAdmin(username, hash(password))
             if (admin){
                 return res.render('adminPanel.ejs')
             }
-            return res.redirect('/teacher/')
+            return res.status.redirect('/teacher/')
         }
+
     }
     res.redirect('/signIn/')
 })
@@ -133,7 +139,7 @@ app.get('/teacher/', async function(req,res){
         const authenticated = await authenticate(username, hash(password));
 
         if (authenticated){
-            await isAdmin(username,hash(password)) ? res.redirect('/admin/') : res.render("teacherPanel.ejs")
+            await isAdmin(username,hash(password)) ? res.redirect(200,'/admin/') : res.render("teacherPanel.ejs")
             return
         }
     }
@@ -200,6 +206,7 @@ app.post('/signIn/', async function(req,res){
 --------------------*/
 
 async function isAdmin(username, hash){
+    username = username.replace(nullbyte,"");
     const client = await userPool.connect();
     const result = await client.query("SELECT administrator FROM users WHERE username = $1 AND pwdhash = $2", [username,hash])
     await client.release()
@@ -229,7 +236,7 @@ app.post("/makeAccount", async function(req,res){
     if (!req.body.password || !req.body.username){
         return res.render("./error.ejs", {error:"400 - Bad Request",description:"You must include the proper body!"})
     }
-    username = req.body.username
+    username = req.body.username.replace(nullbyte,"")
     hashedpassword = hash(req.body.password)
     const client = await userPool.connect();
     await client.query("INSERT INTO users(username,pwdhash,administrator) VALUES ($1, $2, false) ON CONFLICT(username) DO NOTHING", [username,hashedpassword])
@@ -253,7 +260,7 @@ app.post("/editAccount", async function(req,res){
     if (!canModify)
         return res.render("./error.ejs", {error:"401 - Unauthorized",description:"You cannot modify this password!"})
 
-    username = dat.username
+    username = dat.username.replace(nullbyte,"")
     hashedpassword = hash(req.body.password)
     const client = await userPool.connect();
     await client.query("UPDATE users SET pwdhash = $2 WHERE username = $1", [username,hashedpassword])
@@ -276,12 +283,14 @@ app.get('/search', async function(req,res){
 
         let search = req.query.search;
         let originalSearch = search;
-        typeof search=='object' ? search = search[0] : null; //HPP prevention, otherwise it'll crash when /search?search=hi&search=bye
+        //24/12/22 HPP fix for when its a dict and not just a list
+        typeof search=='object' ? search = "" : null; //HPP prevention, otherwise it'll crash when search is not a string
+
         search = search.replace("\\","\\\\").replace("%","\\%").replace("_","\\_") //To prevent wildcards being placed, query would just be % or _ and everything would match, so here's the fix
-        search = search.trim(); // sunglass emoji here
+        search = search.trim().replace(nullbyte, ""); // sunglass emoji here + no more nullbyte chicanery
 
         if (search==""){
-            return res.render("./error.ejs", {error:"400 - Bad request!", description:"Hello student where are your parameters"})
+            return res.render("./error.ejs", {error:"400 - Bad request!", description:"Hello student where is your search"})
         }
 
         const client = await searchPool.connect();
@@ -300,7 +309,7 @@ app.get('/quizinfo/', async function(req,res){
     if (req.query.quiz === undefined)
         return res.status(400).send("missing parameter")
     
-    quiz = clean(req.query.quiz)
+    quiz = clean(req.query.quiz) //nullbyte removal included
     const client = await searchPool.connect()
     
     const out = await client.query("SELECT * FROM search WHERE quizurl = $1",[quiz])
@@ -558,10 +567,10 @@ app.post('/makeQuiz', async function(req,res){
                 ansId = portions[2]
                 question = Object.keys(base.questions[qNum])[0]
 
-                base.questions[qNum][question].push(req.body[element])
+                base.questions[qNum][question].push(clean(req.body[element]))
 
                 if (portions.slice(-1) == "correct"){ //if type:qNum:answerID:correct
-                    base.questions[qNum]["CorrectAnswer"] = req.body[element]
+                    base.questions[qNum]["CorrectAnswer"] = clean(req.body[element])
                 }
             }
         })
@@ -573,7 +582,7 @@ app.post('/makeQuiz', async function(req,res){
         keywords = clean(req.body.keywords)
         description = req.body.description
         
-        let generated = await client.query("INSERT INTO search (quizname, quizdescription, keywords, createdby) VALUES ($1,$2,$3,$4) RETURNING quizurl;", [quiz, description,keywords,username])
+        let generated = await client.query("INSERT INTO search (quizname, quizdescription, keywords, createdby) VALUES ($1,$2,$3,$4) RETURNING quizurl;", [quiz, description,keywords,username].map((value)=>value.replace(nullbyte, "")))
         let url = generated.rows[0].quizurl
         base['name'] = quiz
         quizPath = path.join(`${__dirname}/../quiz/`,`${url}.json`)
@@ -625,7 +634,7 @@ app.get('/admin/users', async (req, res) => {
     let result;
 
     if (req.query.page){
-        page = req.query.page
+        page = clean(req.query.page)
         if (isNaN(parseInt(page))){
             client.release();
             return res.send([{"username":"Invalid Number", "pwdhash":"Invalid Number","administrator":"???"}])
@@ -648,9 +657,6 @@ app.get('/admin/userCount', async (req, res) => {
     
 
     const {username, password} = authRead(req.cookies.auth)
-    
-    
-    
     const admin = await isAdmin(username, hash(password))
     
     if (!admin)
@@ -681,11 +687,11 @@ app.get('/admin/delete', async function(req,res){
         
         const client = await userPool.connect();
         let result;
-        result = await client.query("SELECT * FROM users WHERE username=$1", [req.query.user])
+        result = await client.query("SELECT * FROM users WHERE username=$1", [req.query.user.replace(nullbyte, "")])
 
         if (result.rows.length == 0){
             client.release()
-            return res.status(500).send("invalid user")
+            return res.status(403).send("invalid user")
         }
 
         else if (result.rows[0].administrator==true){
@@ -694,7 +700,7 @@ app.get('/admin/delete', async function(req,res){
         }
         
         
-        await client.query("DELETE FROM users WHERE username=$1", [req.query.user])
+        await client.query("DELETE FROM users WHERE username=$1", [req.query.user.replace(nullbyte, "")])
         client.release()
 
         return res.status(200).send("done")
@@ -715,7 +721,7 @@ app.post("/admin/modifyUser", async function(req,res){
     
 
 
-    let targetname = params.originalName //targetname is the name of the person we're modifying
+    let targetname = params.originalName.replace(nullbyte, "") //targetname is the name of the person we're modifying
     const client = await userPool.connect();
     let userexists = (await client.query("SELECT * FROM users WHERE username = $1", [targetname])).rowCount != 0
     if (!userexists){
@@ -723,13 +729,14 @@ app.post("/admin/modifyUser", async function(req,res){
     }
     
     if (params.username && !(params.username == targetname)){
-        let exists = (await client.query("SELECT * FROM users WHERE username = $1", [params.username])).rowCount != 0
+        let newName = params.username.replace(nullbyte, "")
+        let exists = (await client.query("SELECT * FROM users WHERE username = $1", [newName])).rowCount != 0
         if (exists){
             client.release()
             return res.status(403).send("username conflicts with existing user!")
         }
         
-        await client.query("UPDATE users SET username = $1 WHERE username = $2", [params.username, targetname])
+        await client.query("UPDATE users SET username = $1 WHERE username = $2", [newName, targetname])
         targetname = params.username
     }
     if (params.password)
@@ -763,8 +770,9 @@ app.get('/user/quizzes', async function(req,res){
         return res.status(401).send("No authorization given")
     
 
-    const {username, password} = authRead(req.cookies.auth)
+    let {username, password} = authRead(req.cookies.auth)
     
+    username = username.replace(nullbyte, "")
     
     
     const admin = await isAdmin(username, hash(password))
@@ -781,7 +789,7 @@ app.get('/user/quizzes', async function(req,res){
 
     if (admin){
         if (req.query.page){
-            page = req.query.page
+            page = clean(req.query.page)
             if (isNaN(parseInt(page))){
                 client.release()
                 return res.send([{"username":"Invalid Number", "pwdhash":"Invalid Number","administrator":"???"}])
@@ -795,7 +803,7 @@ app.get('/user/quizzes', async function(req,res){
     }
     else {
         if (req.query.page){
-            page = req.query.page
+            page = clean(req.query.page)
             if (isNaN(parseInt(page))){
                 client.release()
                 return res.send([{"quizname":"Invalid Number", "pwdhash":"Invalid Number","administrator":"???"}])
@@ -814,7 +822,7 @@ app.get('/user/quizzes', async function(req,res){
     
 })
 
-app.post('/removeQuiz', async function(req,res){
+app.post('/removeQuiz', async function(req,res){ // NULLBYTE SAFE!
     if (!req.body.username && !req.body.password){
         if (req.cookies.auth == undefined){ //yes i can shove it into one if statement but this way is more readable for me
             return res.status(401).send("No authorization given")
@@ -830,11 +838,12 @@ app.post('/removeQuiz', async function(req,res){
         auth = authRead(req.cookies.auth)
         auth = {username:auth.username,pass:auth.password}
     }
-    
+    //i couldve just moved username and pass declaration up and written directly to it...
+    //whatever, i'll rewrite later, this is Dec 6 2022, watch it never get rewritten
 
 
-    const {username, pass} = auth
-
+    let {username, pass} = auth
+    username = clean(username)
     const authenticated = await authenticate(username, hash(pass))
     if (!authenticated){
         res.clearCookie('auth')
@@ -843,8 +852,8 @@ app.post('/removeQuiz', async function(req,res){
 
     if (req.body.quizurl){
         const client = await searchPool.connect();
-
-        const exists = await client.query("SELECT * FROM search WHERE quizurl = $1", [req.body.quizurl])
+        const qurl = req.body.quizurl.replace(nullbyte, "")
+        const exists = await client.query("SELECT * FROM search WHERE quizurl = $1", [qurl])
 
         if (exists.rowCount == 0){
             client.release();
@@ -854,7 +863,7 @@ app.post('/removeQuiz', async function(req,res){
         const admin = await isAdmin(username, hash(pass))
 
         
-        const result = await client.query("SELECT * FROM search WHERE createdby = $1 AND quizurl = $2", [username,req.body.quizurl])
+        const result = await client.query("SELECT * FROM search WHERE createdby = $1 AND quizurl = $2", [username,qurl])
         console.log(result.rowCount)
         const owner = result.rowCount != 0 //if rowcount not equal to 0, it exists and a match has been made
 
@@ -865,11 +874,11 @@ app.post('/removeQuiz', async function(req,res){
             return res.status(401).send("You are not allowed to delete this quiz!")
         }
         //STEPS
-        await client.query("DELETE FROM search WHERE quizurl = $1", [req.body.quizurl])
+        await client.query("DELETE FROM search WHERE quizurl = $1", [qurl])
         await client.release();
         fs.unlink(path.join(`${__dirname}/../quiz/`,`${req.body.quizurl.replace("/quiz/","")}.json`), function(err){ //delete .json
             if (err){
-                return res.status(500).send("error")
+                return res.status(403).send("error")
             }
             return res.send('success')
         })
@@ -906,7 +915,7 @@ app.get('/user/quizCount', async function(req,res){
     }
     
     else {
-        result = await client.query("SELECT COUNT(*) FROM search WHERE createdby = $1", [username])
+        result = await client.query("SELECT COUNT(*) FROM search WHERE createdby = $1", [username.replace(nullbyte, "")])
     }
     client.release();
     return res.send(result.rows[0]);

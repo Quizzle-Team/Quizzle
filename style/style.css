@@ -1,4 +1,4 @@
-*{
+:root{
   --background : #fff;
   --primaryColor : #782551;
   --secondaryColor:#762578;
@@ -8,6 +8,8 @@
   --font:'Jost','sans-serif';
 }
 body {
+    transition:200ms linear;
+
     margin:0;
     font-family:'Jost','sans-serif';
     background: var(--background);
@@ -477,6 +479,19 @@ content.index h1{
   margin-top: .1em;
 }
 
+.thumbnail {
+  transition:500ms cubic-bezier(0.42, 0, 0, 1);
+  transform: translateY(none);
+}
+
 .thumbnail:hover {
   transform: translateY(-5px);
+}
+
+.banner {
+  padding-inline: 0;
+}
+
+.options{
+  padding-inline:10px;
 }

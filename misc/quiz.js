@@ -68,8 +68,8 @@ window.addEventListener("beforeunload", callback, {capture: true});
 domain = location.hostname;
 
 
-
-var webSock = new WebSocket(`ws://${domain}/quizSocket`);
+let proto = document.location.href.split(':')[0] == "https" ? "wss" : "ws"
+var webSock = new WebSocket(`${proto}://${domain}/quizSocket`);
 
 function startKeepAliveLoop(){
     loopInterval = setInterval(function(){

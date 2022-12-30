@@ -5,11 +5,13 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="initial-scale=1, width=device-width" />
     <title>Quizzle - <%=title%></title>
-    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
     <link rel="icon" href="/favicon.svg" sizes="any" type="image/svg+xml">
     <link rel="stylesheet" href="/style.css">
     <style>
-        
+        .hold > *, .hold > * > *, .score {
+            transition: 200ms linear;
+        }
+
     </style>
     <script src="/quiz.js" async defer></script>
 </head>

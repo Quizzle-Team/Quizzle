@@ -24,34 +24,6 @@
             left: 10px;
             height: 25px;
         }
-        .spinner { 
-            height: 100px;
-            background-color: white;
-            width: 100px;
-            position: fixed;
-            top:calc(50% - 50px);
-            left:calc(50% - 50px);
-            border-radius: 7px;
-        }
-
-        .loadSpinner {
-            height: 75%;
-            width: 75%;
-            position: relative;
-            top: 12.5%;
-            left: 12.5%;
-            border-radius: 100%;
-            animation: loadSpinner 2s linear infinite;    
-        }
-        
-        @keyframes loadSpinner {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
     </style>
     <script src="ejs.min.js"></script> <!--Yes, I know its blocking, but I need these to be displayed the same time the page renders, so sorry ! its just 20 kb on a local connection, it'll be fine anyways-->
     

@@ -13,9 +13,12 @@ content > h1 {
 .discover.cards {
     scrollbar-color: #6969dd #e0e0e0;
     scrollbar-width: thin;
+    box-shadow: -100px 0px 84px -94px inset white;
+    
+    height: 12em;
     display: flex;
     overflow-x: scroll;
-    box-shadow: -100px 0px 84px -94px inset white;
+    align-items: center;
 }
 
 .cards::-webkit-scrollbar {
@@ -33,4 +36,33 @@ content > h1 {
 
 .thumbnail {
     cursor:pointer;
+}
+
+.options>svg{
+    display:none;
+}
+
+@media (max-width:630px){
+    .logo>img{
+        display:block;
+    }
+    .logo>h1 {
+        display:none;
+    }
+}
+
+@media (max-width:560px){
+    .options>*:not(svg){
+        display:none;
+    }
+    .options>svg{
+        display:flex;
+    }
+}
+
+input[type="search"] {
+    padding:0;
+    width: 100%;
+    min-width: 75px;
+    border-bottom:0
 }
