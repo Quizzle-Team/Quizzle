@@ -9,7 +9,7 @@ cd to the project directory, and run `npm install` just to make sure all depende
 ### NOTE:
 This is currently still in beta. 1.3 ~~is~~ was meant to be the Stable update, but there will be constant updates. There could be some bugs, and some potential vulnerabilities, but I am constantly reviewing every endpoint for vulnerabilities like XSS and HPP, and every input is sanitized. There were a few bugs in 1.3, but that shouldnt be a concern now that the fix has been pushed in `1.3.1 partial`
 
-If you find a bug, report it to @shrekman#5545 privately or report it the the #bug-report channel in https://discord.gg/4VDmfuBSFf
+If you find a bug, report it to @pastrikk privately or report it the the #bug-report channel in https://discord.gg/4VDmfuBSFf
 
 It's lacking many features rn, like file upload and account editing*
 
